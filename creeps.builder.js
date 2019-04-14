@@ -1,6 +1,5 @@
 var roleBuilder = {
 
-    /** @param {Creep} creep **/
     run: function(creep) {
 
 	    if(creep.memory.building && creep.carry.energy == 0) {
@@ -18,22 +17,24 @@ var roleBuilder = {
 	        var targets = creep.room.find(FIND_CONSTRUCTION_SITES);
             if(targets.length) {
                 if(creep.build(targets[0]) == ERR_NOT_IN_RANGE) {
-                    creep.moveTo(targets[0], {visualizePathStyle: {stroke: '#ffffff'}});
+                    creep.travelTo(targets[0], {visualizePathStyle: {stroke: '#ffffff'}, maxRooms: 1});
                 }
             }
 	    }
 	    else {
 	       if(creep.memory.pickupPoint == undefined){
-                var pickupPoint = creep.pos.findClosestByRange(FIND_DROPPED_ENERGY);
-                let path = creep.room.findPath(creep.pos, pickupPoint.pos, { maxOps: 5 });
-                if(path.length && path.length <= 5)
-                    creep.memory.pickupPoint = pickupPoint.id;
+                var pickupPoint = creep.pos.findClosestByRange(FIND_DROPPED_RESOURCES);
+                if(pickupPoint != null){
+                    let path = creep.room.findPath(creep.pos, pickupPoint.pos, { maxOps: 5 });
+                    if(path.length && path.length <= 5)
+                        creep.memory.pickupPoint = pickupPoint.id;
+                }
             }
             
             if(creep.memory.pickupPoint != undefined)
             {
                 if(creep.pickup(Game.getObjectById(creep.memory.pickupPoint)) == ERR_NOT_IN_RANGE) {
-                    creep.moveTo(Game.getObjectById(creep.memory.pickupPoint).pos, {visualizePathStyle: {stroke: '#ffaa00'}, maxRooms: 1});
+                    creep.travelTo(Game.getObjectById(creep.memory.pickupPoint).pos, {visualizePathStyle: {stroke: '#ffaa00'}, maxRooms: 1});
                 }else{
                     
                     //Deque Memory.resourceQueue

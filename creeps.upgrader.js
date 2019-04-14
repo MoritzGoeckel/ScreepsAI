@@ -1,6 +1,5 @@
 var roleUpgrader = {
 
-    /** @param {Creep} creep **/
     run: function(creep) {
 
         if(creep.memory.upgrading && creep.carry.energy == 0) {
@@ -16,22 +15,24 @@ var roleUpgrader = {
 
 	    if(creep.memory.upgrading) {
             if(creep.upgradeController(creep.room.controller) == ERR_NOT_IN_RANGE) {
-                creep.moveTo(creep.room.controller, {visualizePathStyle: {stroke: '#ffffff'}, maxRooms: 1});
+                creep.travelTo(creep.room.controller, {visualizePathStyle: {stroke: '#ffffff'}, maxRooms: 1});
             }
         }
         else {
             if(creep.memory.pickupPoint == undefined){
-                var pickupPoint = creep.pos.findClosestByRange(FIND_DROPPED_ENERGY);
-                let path = creep.room.findPath(creep.pos, pickupPoint.pos, { maxOps: 5 });
-                if(path.length && path.length <= 5)
-                    creep.memory.pickupPoint = pickupPoint.id;
+                var pickupPoint = creep.pos.findClosestByRange(FIND_DROPPED_RESOURCES);
+                if(pickupPoint != null){
+                    let path = creep.room.findPath(creep.pos, pickupPoint.pos, { maxOps: 5 });
+                    if(path.length && path.length <= 5)
+                        creep.memory.pickupPoint = pickupPoint.id;
+                }
             }
             
             if(creep.memory.pickupPoint != undefined)
             {
                 
                 if(creep.pickup(Game.getObjectById(creep.memory.pickupPoint)) == ERR_NOT_IN_RANGE) {
-                    creep.moveTo(Game.getObjectById(creep.memory.pickupPoint).pos, {visualizePathStyle: {stroke: '#ffaa00'}, maxRooms: 1});
+                    creep.travelTo(Game.getObjectById(creep.memory.pickupPoint).pos, {visualizePathStyle: {stroke: '#ffaa00'}, maxRooms: 1});
                 }else{
                     
                     //Deque Memory.resourceQueue
