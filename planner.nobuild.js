@@ -15,6 +15,9 @@ function toPosArray(path){
 }
 
 function draw(room){
+    if(room.memory.nobuild == undefined)
+        return;
+
     Object.keys(room.memory.nobuild).map(p => {
         let parsed = JSON.parse(p);
         let score = room.memory.nobuild[p] + 1;
@@ -26,6 +29,11 @@ function calculateNoBuilds(room){
     // Only do once
     if(room.memory.nobuild != undefined)
         return;
+
+    if(room.controller == undefined){
+        console.log("[BUG] room.controller is undefined! WTF? ##############")
+        return;
+    }
 
     let spawns = room.find(FIND_MY_SPAWNS).map(s => s.pos);
     let sources = room.find(FIND_SOURCES).map(s => s.pos);
@@ -70,9 +78,9 @@ function calculateNoBuilds(room){
 
 module.exports = {
     run: function(room) {
-        if(room.memory.nobuild != undefined)
+        if(room.memory.nobuild == undefined)
             calculateNoBuilds(room);
-            
-        //draw(room);
+
+        draw(room);
 	}
 };

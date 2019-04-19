@@ -1,7 +1,7 @@
 var oneIn = require('./opts.rnd');
 var utils = require('./opts.utils');
 
-function buildExtensions(room, maximumSites, maximumExtensions) {
+function buildExtensions(room, maximumSites, maximumExtensions, radius) {
     utils.logInform("Checking extention constructions in " + room);
 
     let existingSites = room.find(FIND_CONSTRUCTION_SITES).filter(function(site) {
@@ -23,13 +23,14 @@ function buildExtensions(room, maximumSites, maximumExtensions) {
 
     utils.logInform("Constructing extentions in " + room);
 
-    let positions = getSuitablePositions(room, 15);
-    utils.shuffle(positions);
+    let positions = getSuitablePositions(room, radius);
 
     if(positions.length == 0){
         console.log("Found no suitable positions for extensions");
         return;
     }
+
+    utils.shuffle(positions);
 
     while(existingSites < maximumSites && existingExtensions < maximumExtensions && positions.length > 0){
         const pos = positions.pop();
@@ -40,6 +41,10 @@ function buildExtensions(room, maximumSites, maximumExtensions) {
     }
 
     // TODO: At some point this is not going to be enough space
+}
+
+function isInMap(x, y, border){
+    return x < 50 - border && x > border && y < 50 - border && y > border;
 }
 
 function getSuitablePositions(room, searchRadius){
@@ -53,6 +58,9 @@ function getSuitablePositions(room, searchRadius){
     for(let s in sources){
         for(let x = -searchRadius / 2; x < searchRadius / 2; x++){
             for(let y = -searchRadius / 2; y < searchRadius / 2; y++){
+                if(!isInMap(sources[s].pos.x + x, sources[s].pos.y + y, 7))
+                    continue;
+
                 let pos = new RoomPosition(sources[s].pos.x + x, sources[s].pos.y + y, room.name);
 
                 if(room.memory.nobuild[JSON.stringify({x: pos.x, y: pos.y})] == undefined 
@@ -86,7 +94,7 @@ function getSuitablePositions(room, searchRadius){
 }
 
 function draw(room){
-    let poses = getSuitablePositions(room, 15);
+    let poses = getSuitablePositions(room, 25);
     for(let p in poses){
         room.visual.circle(poses[p].x, poses[p].y, {fill: 'transparent', radius: 0.3, stroke: 'orange'});
     }
@@ -95,7 +103,7 @@ function draw(room){
 module.exports = {
     run: function(room){
         if(oneIn(153))
-            buildExtensions(room, 1, 30);
+            buildExtensions(room, 1, 50, 25);
 
         //draw(room);
     }

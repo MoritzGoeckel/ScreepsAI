@@ -29,10 +29,10 @@ var roleBuilder = {
             // Refactor. That is too deep
             else {
                 // TODO: This should not be done every time. Maybe coordinate better
-                var targets = creep.room.find(FIND_CONSTRUCTION_SITES);
-                if(targets.length != 0) {
-                    if(creep.build(targets[0]) == ERR_NOT_IN_RANGE) {
-                        creep.travelTo(targets[0], {visualizePathStyle: {stroke: '#ffffff'}, maxRooms: 1});
+                var buildTarget = creep.pos.findClosestByRange(FIND_CONSTRUCTION_SITES);
+                if(buildTarget != null) {
+                    if(creep.build(buildTarget) == ERR_NOT_IN_RANGE) {
+                        creep.travelTo(buildTarget, {visualizePathStyle: {stroke: '#ffffff'}, maxRooms: 1});
                     }
                 } else {
                     // Todo: Test this
@@ -60,6 +60,11 @@ var roleBuilder = {
             //Search for energy
             if(creep.memory.pickupPoint == undefined){
                 var closestResource = creep.pos.findClosestByRange(FIND_DROPPED_RESOURCES);
+
+                // TODO: That is a quickfix. Should also regard container
+                if(closestResource == null)
+                    return;
+
                 var closestContainer = creep.pos.findClosestByRange(FIND_STRUCTURES, {
                     filter: (structure) => structure.structureType == STRUCTURE_CONTAINER && structure.store[RESOURCE_ENERGY] > 100
                 });

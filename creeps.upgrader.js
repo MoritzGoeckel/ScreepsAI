@@ -24,6 +24,11 @@ var roleUpgrader = {
             //TODO: remove doublicated code. Make "get some energy somewhere" generic. Also enable them to take tombstone energy (Its also in builder)
             if(creep.memory.pickupPoint == undefined){
                 var closestResource = creep.pos.findClosestByRange(FIND_DROPPED_RESOURCES);
+
+                // TODO: That is a quickfix. Should also regard container
+                if(closestResource == null)
+                    return;
+
                 var closestContainer = creep.pos.findClosestByRange(FIND_STRUCTURES, {
                     filter: (structure) => structure.structureType == STRUCTURE_CONTAINER && structure.store[RESOURCE_ENERGY] > 100
                 });

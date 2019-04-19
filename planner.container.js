@@ -13,6 +13,11 @@ function placeCloseTo(room, pos, MAXIMUM){
     if(existingContainerClose >= MAXIMUM || existingSites > 0)
         return;
 
+    if(room.memory.nobuild == undefined){
+        console.log("Waiting for nobuild to be initialized");
+        return;
+    }
+    
     let ROOM_CENTER = 25;
     let terrain = room.getTerrain();
 
