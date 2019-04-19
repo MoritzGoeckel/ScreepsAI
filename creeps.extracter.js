@@ -1,11 +1,13 @@
+var utils = require('./opts.utils');
+var voteomat = require('./opts.voteomat');
+
 module.exports = {
     run: function(creep) {
 
         if(creep.memory.assignedSource == undefined){
-            var sources = creep.room.find(FIND_SOURCES);
             var extracters = _.filter(Game.creeps, (creep) => creep.memory.roleId == 'extracter' && creep.memory.assignedSource != undefined);
 
-            sources = sources.filter(function(source) {
+            let sources = creep.room.find(FIND_SOURCES).filter(function(source) {
                 return source.pos.findInRange(FIND_HOSTILE_CREEPS, 8).length == 0 && source.pos.findInRange(FIND_FLAGS, 8).length == 0; // Red flags
             });
 
@@ -34,8 +36,9 @@ module.exports = {
 
 
         var assignedSource = Game.getObjectById(creep.memory.assignedSource);
-        var result = creep.harvest(assignedSource);         
+        var result = creep.harvest(assignedSource);
         if(result == ERR_NOT_IN_RANGE) {
+            voteomat.voteRoad(creep);
             creep.travelTo(assignedSource.pos, {visualizePathStyle: {stroke: '#ffaa00'}, maxRooms: 1});
         }
 

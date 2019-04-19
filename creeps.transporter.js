@@ -1,4 +1,6 @@
 var _ = require('lodash');
+var utils = require('./opts.utils');
+var voteomat = require('./opts.voteomat');
 
 module.exports = {
     
@@ -22,34 +24,50 @@ module.exports = {
 
             if(notTakenTargets.length > 0){
                 creep.memory.targetResource = notTakenTargets[0].id;
-                creep.say("Picking up " + notTakenTargets[0].amount);
             }
             else{
-                creep.say("Nothing to transport");                
+                //creep.say("Nothing to transport");                
             }
         }
         
         if(creep.memory.targetResource != undefined && _.sum(creep.carry) == 0) {
             let target = Game.getObjectById(creep.memory.targetResource);
+            if(target == null){
+                delete creep.memory.targetResource;
+                return;
+            }
+
             if(creep.pickup(target) == ERR_NOT_IN_RANGE) {
+                voteomat.voteRoad(creep);
                 creep.travelTo(target, {visualizePathStyle: {stroke: '#ffaa00'}, maxRooms: 1});
             }
         }
         else if(_.sum(creep.carry) > 0){
-            
             var targets = creep.room.find(FIND_STRUCTURES, {
                     filter: (structure) => {
                         return (structure.structureType == STRUCTURE_EXTENSION ||
                                 structure.structureType == STRUCTURE_SPAWN ||
-                                structure.structureType == STRUCTURE_TOWER) && structure.energy < structure.energyCapacity;
+                                structure.structureType == STRUCTURE_CONTAINER ||
+                                structure.structureType == STRUCTURE_TOWER)
                     }
+            }).filter(structure => {
+                if(structure.structureType == STRUCTURE_CONTAINER && (structure.store[RESOURCE_ENERGY] + (structure.storeCapacity / 10.0)) < structure.storeCapacity) //Todo: only works for energy
+                    return true;
+
+                return structure.energy < structure.energyCapacity;
             });
+
+            // Should prioritize extensions
+            let extensions = targets.filter(t => t.structureType == STRUCTURE_EXTENSION);
+            if(extensions.length > 0)
+                targets = extensions;
 
             //Memory.resourceQueue todo:
             //Move to resourceQueue target
 
             if(targets.length > 0) {
                 if(creep.transfer(targets[0], RESOURCE_ENERGY) == ERR_NOT_IN_RANGE) {
+                    voteomat.voteRoad(creep);
                     creep.travelTo(targets[0], {visualizePathStyle: {stroke: '#ffffff'}});
                 }
             }

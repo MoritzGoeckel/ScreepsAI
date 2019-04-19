@@ -1,11 +1,12 @@
 var cleanup = require('./opts.cleanup');
 var spawnerMgr = require('./spawner.default');
 var creepMgr = require('./creeps.default');
-var creepMgr = require('./creeps.default');
 
 var Traveler = require('opts.Traveler');
 
 var roadPlanner = require('./planner.road');
+var nobuildPlanner = require('./planner.nobuild');
+
 var extentionPlanner = require('./planner.extention');
 
 var containerPlanner = require('./planner.container');
@@ -22,14 +23,13 @@ module.exports.loop = function () {
     }
 
     for(var spawn in Game.spawns){
-        if(oneIn(5))
-            spawnerMgr.run(Game.spawns[spawn]);
+        spawnerMgr.run(Game.spawns[spawn]);
+    }
 
-        // Todo: Should be per room and not per spawn
-        if(oneIn(12))
-            roadPlanner.run(Game.spawns[spawn].room);
-
-        if(oneIn(30))
-            extentionPlanner.run(Game.spawns[spawn].room);
+    for(const r in Game.rooms) {
+        roadPlanner.run(Game.rooms[r]);
+        extentionPlanner.run(Game.rooms[r]);
+        containerPlanner.run(Game.rooms[r]);
+        nobuildPlanner.run(Game.rooms[r]);
     }
 }

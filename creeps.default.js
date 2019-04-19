@@ -1,3 +1,5 @@
+var utils = require('./opts.utils');
+
 module.exports = {
     run: function(creep) {
         var roles = {
