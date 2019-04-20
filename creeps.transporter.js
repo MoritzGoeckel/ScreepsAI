@@ -40,7 +40,7 @@ module.exports = {
             //}
         }
         
-        if(creep.memory.targetResource != undefined && _.sum(creep.carry) == 0) {
+        if(creep.memory.targetResource != undefined && _.sum(creep.carry) <= (creep.carryCapacity * 0.8)) {
             let target = Game.getObjectById(creep.memory.targetResource);
             if(target == null){
                 delete creep.memory.targetResource;
@@ -52,7 +52,8 @@ module.exports = {
                 creep.travelTo(target, {visualizePathStyle: {stroke: '#ffaa00'}, maxRooms: 1});
             }
         }
-        else if(creep.memory.targetSink == undefined && _.sum(creep.carry) > 0){
+        else if(creep.memory.targetSink == undefined && _.sum(creep.carry) > (creep.carryCapacity * 0.8)){
+            //Find target for 
             var targets = creep.room.find(FIND_STRUCTURES, {
                     filter: (structure) => {
                         return (structure.structureType == STRUCTURE_EXTENSION ||

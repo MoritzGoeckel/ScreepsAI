@@ -16,14 +16,14 @@ var roleBuilder = {
 	    if(creep.memory.building) {
             // Build or upgrade
 
-            if(creep.memory.structureToRepair != undefined && creep.memory.structureToRepair != null){
+            if(creep.memory.structureToRepair != undefined){
                 let structure = Game.getObjectById(creep.memory.structureToRepair);
                 var result = creep.repair(structure);
                 if (result == ERR_NOT_IN_RANGE) {
                     creep.travelTo(structure);
                 }
                 if(structure.hits >= structure.hitsMax){
-                    creep.memory.structureToRepair = null;
+                    delete creep.memory.structureToRepair;
                 }
             }
             // Refactor. That is too deep
@@ -36,18 +36,21 @@ var roleBuilder = {
                     }
                 } else {
                     // Todo: Test this
-                    if(creep.memory.structureToRepair == undefined || creep.memory.structureToRepair == null){
+                    let repairThreshold = 0.8;
+                    if(creep.memory.structureToRepair == undefined){
                         // Maybe should also enable walls to be repaired
+                        // Todo: Should prioritize
                         let structureToRepair = creep.pos.findClosestByRange(
-                            FIND_MY_STRUCTURES, 
+                            FIND_STRUCTURES, 
                             {filter: (s) => 
-                                (s.hits < s.hitsMax && 
-                                s.structureType != STRUCTURE_WALL && 
-                                s.structureType != STRUCTURE_RAMPART) 
-                                || (s.structureType == STRUCTURE_RAMPART && s.hits < 100000) 
+                                ((s.hits < s.hitsMax * repairThreshold) && 
+                                s.structureType != STRUCTURE_WALL && // Not repairing walls
+                                s.structureType != STRUCTURE_ROAD && // Not repairing roads
+                                s.structureType != STRUCTURE_RAMPART)
+                                || (s.structureType == STRUCTURE_RAMPART && s.hits < 100000)  // Reparing RAMPART with less hitpoints
                             });
 
-                        if (structureToRepair != undefined) {
+                        if (structureToRepair != null) {
                             creep.memory.structureToRepair = structureToRepair.id;
                         }
                     }
