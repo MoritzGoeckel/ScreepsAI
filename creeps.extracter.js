@@ -31,7 +31,6 @@ module.exports = {
             }
             
             creep.memory.assignedSource = lowestId.id;
-            creep.say("Assigining resource: " + JSON.stringify(lowestId));
         }
 
 

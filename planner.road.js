@@ -100,12 +100,12 @@ function draw(room, threshold){
 
 module.exports = {
     run: function(room) {
-        draw(room, 0.005);
+        //draw(room, 0.005);
 
         if(oneIn(54))
             constructRoads(room, 2, 230, 0.005);
 
-        if(oneIn(1000 * 1000)) // Might never happen
+        if(oneIn(12 * 60 * 60 / 2)) // Every 12 hours?
             resetVotes(room);
 	}
 };

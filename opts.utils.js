@@ -20,5 +20,18 @@ module.exports = {
 
     distance: function(p1, p2){
         return Math.abs(p1.x - p2.x) + Math.abs(p1.y - p2.y);
+    },
+
+    dictToScoreSortedList: function(dict){
+        let items = Object.keys(dict).map(function(key) {
+            return [key, dict[key]];
+        });
+
+        // Sort the array based on the second element
+        items.sort(function(first, second) {
+            return second[1] - first[1];
+        });
+
+        return items;
     }
 };

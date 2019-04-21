@@ -50,7 +50,7 @@ function spawnOptimized(available, startAttributes, desirableAttributes, role, s
 function checkSpawn(spawner) {
 
     let maxUpgrader = 4;
-    let maxBuilder = 4;
+    let maxBuilder = 3;
     let maxFighter = 3;
     
     let available = spawner.room.energyAvailable; //energyCapacityAvailable
@@ -70,6 +70,13 @@ function checkSpawn(spawner) {
 
     var resources = spawner.room.find(FIND_SOURCES)
 
+    let existingExtensions = spawner.room.find(FIND_STRUCTURES).filter(function(structure) {
+        return structure.structureType == STRUCTURE_EXTENSION;
+    }).length;
+
+    if(extracters.length > 0 && transporter.length > 0 && spawner.room.energyAvailable < existingExtensions * 50)
+        return; // Only when all extensions are full
+
     if(spawner.spawning == null)
     {
         //if(spawner.memory.enemies == undefined){ // TODO: OneIn does only work in main. Second layer would need memory.
@@ -81,7 +88,7 @@ function checkSpawn(spawner) {
         }
 
         else if(extracters.length < resources.length * 2 && extracters.length <= transporter.length) {
-            spawnOptimized(available, [MOVE, WORK], [WORK], 'extracter', spawner);
+            spawnOptimized(available, [MOVE, WORK], [WORK, WORK, WORK, MOVE], 'extracter', spawner);
         }
 
         else if(transporter.length < resources.length * 2) {
@@ -102,7 +109,7 @@ function checkSpawn(spawner) {
 
 module.exports = {
     run: function(spawner){
-        if(oneIn(15))
+        if(oneIn(16))
             checkSpawn(spawner);
     }
 };

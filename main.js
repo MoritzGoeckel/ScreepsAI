@@ -32,4 +32,7 @@ module.exports.loop = function () {
         containerPlanner.run(Game.rooms[r]);
         nobuildPlanner.run(Game.rooms[r]);
     }
+
+    if(oneIn(30))
+        console.log("Bucket: " + Game.cpu.bucket)
 }

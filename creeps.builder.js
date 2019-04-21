@@ -1,43 +1,16 @@
 var utils = require('./opts.utils');
-
-function goSomewhereRandom(creep){
-    creep.travelTo(new RoomPosition(Math.random() * 30 + 10, Math.random() * 30 + 10, creep.room.name));
-}
-
-function getOutOfWay(creep){
-    var closestCreep = creep.room.find(FIND_CREEPS).filter(c => c.id != creep.id && utils.distance(creep.pos, c.pos) < 3);
-    if(closestCreep.length == 0)
-        return;
-    
-    closestCreep = closestCreep.sort(function(a, b){ return utils.distance(a.pos, creep.pos) > utils.distance(b.pos, creep.pos); });            
-    closestCreep = closestCreep[0];
-
-    if(utils.distance(closestCreep.pos, creep.pos) > 2)
-        return;
-
-    let target = new RoomPosition(creep.pos.x * 2 - closestCreep.pos.x, creep.pos.y * 2 - closestCreep.pos.y, creep.room.name);
-    //creep.room.visual.circle(target.x, target.y, {fill: 'transparent', radius: 0.5, stroke: 'red'});
-    if(creep.travelTo(target) != OK){
-        goSomewhereRandom(creep);
-    }
-}
-
-// TODO: They should also ugprade
+var behaviours = require('./creeps.behaviours');
 
 var roleBuilder = {
 
+    // Should he also upgrade the controller?
+
     run: function(creep) {
 
-	    if(creep.memory.building && creep.carry.energy == 0) {
-            creep.memory.building = false;
-
-            //Enque Memory.resourceQueue
-	    }
-	    if(!creep.memory.building && creep.carry.energy == creep.carryCapacity) {
-	        creep.memory.building = true;
-	    }
-
-	    if(creep.memory.building) {
+	    if(creep.carry.energy == 0){
+            behaviours.getEnergyFromSomewhere(creep);
+        }
+	    else {
             // Build or upgrade
 
             if(creep.memory.structureToRepair != undefined){
@@ -78,67 +51,10 @@ var roleBuilder = {
                             creep.memory.structureToRepair = structureToRepair.id;
                         }
                         else{
-                            //creep.say("Idle");
-                            getOutOfWay(creep)
+                            if(behaviours.bringResourcesToExtensions(creep) == false)
+                                behaviours.getOutOfWay(creep);
                         }
                     }
-                }
-            }
-	    }
-	    else {
-
-            // This is doublicated code with upgrader
-            //Search for energy
-            if(creep.memory.pickupPoint == undefined){
-                var closestResource = creep.pos.findClosestByRange(FIND_DROPPED_RESOURCES);
-
-                // TODO: That is a quickfix. Should also regard container
-                if(closestResource == null)
-                    return;
-
-                var closestContainer = creep.pos.findClosestByRange(FIND_STRUCTURES, {
-                    filter: (structure) => structure.structureType == STRUCTURE_CONTAINER && structure.store[RESOURCE_ENERGY] > 100
-                });
-
-                if(closestContainer != null && creep.room.findPath(creep.pos, closestContainer.pos).length < creep.room.findPath(creep.pos, closestResource.pos).length)
-                    pickupPoint = closestContainer;
-                else
-                    pickupPoint = closestResource;
-
-                if(pickupPoint != null){
-                    //let path = creep.room.findPath(creep.pos, pickupPoint.pos, { maxOps: 5 });
-                    //if(path.length && path.length <= 5)
-                    creep.memory.pickupPoint = pickupPoint.id;
-                }
-            }
-            
-            if(creep.memory.pickupPoint != undefined)
-            {
-                let pickupObject = Game.getObjectById(creep.memory.pickupPoint);
-
-                if(pickupObject == null){
-                    creep.memory.pickupPoint = undefined;
-                    delete creep.memory.pickupPoint;
-                    return;
-                }
-
-                if(pickupObject.structureType == STRUCTURE_CONTAINER){
-                    let result = creep.withdraw(pickupObject, RESOURCE_ENERGY);
-                    if(result == ERR_NOT_IN_RANGE)
-                        creep.travelTo(pickupObject.pos, {visualizePathStyle: {stroke: '#ffaa00'}, maxRooms: 1})
-                    
-                    if(result == ERR_NOT_ENOUGH_RESOURCES || result == OK){
-                        creep.memory.pickupPoint = undefined;
-                        delete creep.memory.pickupPoint;
-                    }
-                }
-                else if(creep.pickup(pickupObject) == ERR_NOT_IN_RANGE) {
-                    creep.travelTo(pickupObject.pos, {visualizePathStyle: {stroke: '#ffaa00'}, maxRooms: 1});
-                }else{
-                    //Deque Memory.resourceQueue
-                    
-                    creep.memory.pickupPoint = undefined;
-                    delete creep.memory.pickupPoint;
                 }
             }
 	    }
