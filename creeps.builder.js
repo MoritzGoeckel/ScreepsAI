@@ -51,8 +51,10 @@ var roleBuilder = {
                             creep.memory.structureToRepair = structureToRepair.id;
                         }
                         else{
-                            if(behaviours.bringResourcesToExtensions(creep) == false)
-                                behaviours.getOutOfWay(creep);
+                            if(behaviours.bringResourcesToExtensions(creep) == false){
+                                behaviours.upgradeController(creep);
+                                //behaviours.getOutOfWay(creep);
+                            }
                         }
                     }
                 }

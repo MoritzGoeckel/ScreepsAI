@@ -137,7 +137,7 @@ function getSuitablePositions_v2(room, searchRadius){
                     let sourceDistance = Math.abs(pos.x - sources[s].pos.x) + Math.abs(pos.y - sources[s].pos.y);
 
                     if(sourceDistance > 1 && pos.x < 45 && pos.x > 5 && pos.y < 45 && pos.y > 5 && (numWalls < 2 || numWalls == 3)
-                        && ((pos.x % 2 == 1 && pos.y % 2 == 1) || (pos.x % 4 == 0 && pos.y % 4 == 0))){
+                        && ((pos.x % 3 == 0 || pos.x % 3 == 1) && (pos.y % 3 == 0 || pos.y % 3 == 1))){
                         scored[JSON.stringify(pos)] = numRoads / sourceDistance;
                     }
                 }

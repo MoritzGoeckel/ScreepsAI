@@ -29,15 +29,16 @@ module.exports = {
         if(creep.memory.pickupPoint == undefined){
             var closestResource = creep.pos.findClosestByRange(FIND_DROPPED_RESOURCES);
 
-            // TODO: That is a quickfix. Should also regard container
-            if(closestResource == null)
-                return;
-
             var closestContainer = creep.pos.findClosestByRange(FIND_STRUCTURES, {
                 filter: (structure) => structure.structureType == STRUCTURE_CONTAINER && structure.store[RESOURCE_ENERGY] > 0
             });
 
-            if(closestContainer != null && creep.room.findPath(creep.pos, closestContainer.pos).length < creep.room.findPath(creep.pos, closestResource.pos).length)
+            // TODO: That is a quickfix. Should also regard container
+            if(closestResource == null)
+                return;
+
+            if(closestResource == null || 
+                (closestContainer != null && creep.room.findPath(creep.pos, closestContainer.pos).length < creep.room.findPath(creep.pos, closestResource.pos).length))
                 pickupPoint = closestContainer;
             else
                 pickupPoint = closestResource;
