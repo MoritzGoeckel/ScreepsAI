@@ -1,5 +1,29 @@
 var utils = require('./opts.utils');
 
+function goSomewhereRandom(creep){
+    creep.travelTo(new RoomPosition(Math.random() * 30 + 10, Math.random() * 30 + 10, creep.room.name));
+}
+
+function getOutOfWay(creep){
+    var closestCreep = creep.room.find(FIND_CREEPS).filter(c => c.id != creep.id && utils.distance(creep.pos, c.pos) < 3);
+    if(closestCreep.length == 0)
+        return;
+    
+    closestCreep = closestCreep.sort(function(a, b){ return utils.distance(a.pos, creep.pos) > utils.distance(b.pos, creep.pos); });            
+    closestCreep = closestCreep[0];
+
+    if(utils.distance(closestCreep.pos, creep.pos) > 2)
+        return;
+
+    let target = new RoomPosition(creep.pos.x * 2 - closestCreep.pos.x, creep.pos.y * 2 - closestCreep.pos.y, creep.room.name);
+    //creep.room.visual.circle(target.x, target.y, {fill: 'transparent', radius: 0.5, stroke: 'red'});
+    if(creep.travelTo(target) != OK){
+        goSomewhereRandom(creep);
+    }
+}
+
+// TODO: They should also ugprade
+
 var roleBuilder = {
 
     run: function(creep) {
@@ -52,6 +76,10 @@ var roleBuilder = {
 
                         if (structureToRepair != null) {
                             creep.memory.structureToRepair = structureToRepair.id;
+                        }
+                        else{
+                            //creep.say("Idle");
+                            getOutOfWay(creep)
                         }
                     }
                 }

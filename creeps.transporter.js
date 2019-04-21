@@ -2,11 +2,6 @@ var _ = require('lodash');
 var utils = require('./opts.utils');
 var voteomat = require('./opts.voteomat');
 
-// Todo: Maybe put in utils
-function distance(p1, p2){
-    return Math.abs(p1.x - p2.x) + Math.abs(p1.y - p2.y);
-}
-
 module.exports = {
     
     run: function(creep) {
@@ -73,7 +68,7 @@ module.exports = {
             if(extensions.length > 0)
                 targets = extensions;
 
-            targets = targets.sort(function(a, b){ return distance(a.pos, creep.pos) > distance(b.pos, creep.pos); });            
+            targets = targets.sort(function(a, b){ return utils.distance(a.pos, creep.pos) > utils.distance(b.pos, creep.pos); });            
 
             //Memory.resourceQueue todo:
             //Move to resourceQueue target
