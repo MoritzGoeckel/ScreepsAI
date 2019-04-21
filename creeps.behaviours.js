@@ -33,10 +33,6 @@ module.exports = {
                 filter: (structure) => structure.structureType == STRUCTURE_CONTAINER && structure.store[RESOURCE_ENERGY] > 0
             });
 
-            // TODO: That is a quickfix. Should also regard container
-            if(closestResource == null)
-                return;
-
             if(closestResource == null || 
                 (closestContainer != null && creep.room.findPath(creep.pos, closestContainer.pos).length < creep.room.findPath(creep.pos, closestResource.pos).length))
                 pickupPoint = closestContainer;
