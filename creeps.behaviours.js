@@ -117,7 +117,7 @@ module.exports = {
         }
     },
 
-    bringResourcesToExtensions: function(creep){
+    unreservedExtensionsExist: function(creep){
         if(creep.room.memory.reservedExtensions == undefined){
             creep.room.memory.reservedExtensions = {};
         }
@@ -134,10 +134,18 @@ module.exports = {
 
             if(targets.length != 0){
                 creep.memory.targetExtensionSink = targets[0].id;
+                return true;
             }
             else
                 return false;
         }
+
+        return creep.memory.targetExtensionSink != undefined;
+    },
+
+    bringResourcesToExtensions: function(creep){
+        if(module.exports.unreservedExtensionsExist(creep) == false)
+            return false;
 
         if(creep.memory.targetExtensionSink != undefined){
             var targetExtensionSink = Game.getObjectById(creep.memory.targetExtensionSink);

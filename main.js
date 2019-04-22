@@ -33,7 +33,9 @@ module.exports.loop = function () {
         extentionPlanner.run(Game.rooms[r]);
         containerPlanner.run(Game.rooms[r]);
         nobuildPlanner.run(Game.rooms[r]);
-        statisticsRunner.run(Game.rooms[r]);
+        
+        if(oneIn(100))
+            statisticsRunner.run(Game.rooms[r]);
     }
 
     if(oneIn(30))
