@@ -1,6 +1,14 @@
 # Todo
 
 * Better logging
-* Caching for search operations
-* More construction sites depends on engery and builder
-* Defence
+* Centralized Caching (for search operations)
+* Defence (Towers, walls, ramps)
+* Container for extractor?
+* Storage
+* Claiming
+* Reserving
+* Attack
+* Multi room harvesting / Transport
+* Tower
+* Have your own statistics: Time -> Controller state, Time -> Energy used / tick
+* Automate spawn placement

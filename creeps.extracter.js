@@ -4,6 +4,8 @@ var voteomat = require('./opts.voteomat');
 module.exports = {
     run: function(creep) {
 
+        // TODO: Sometimes  they are still on the same source
+
         if(creep.memory.assignedSource == undefined){
             var extracters = _.filter(Game.creeps, (creep) => creep.memory.roleId == 'extracter' && creep.memory.assignedSource != undefined);
 
@@ -44,14 +46,5 @@ module.exports = {
         for(var resourceType in creep.carry) {
             creep.drop(resourceType);
         }
-
-	    /*if(creep.carry.energy < creep.carryCapacity) {
-        console.log(creep.carryCapacity);
-            
-        }
-        else {
-            
-        }*/
-
 	}
 };

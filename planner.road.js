@@ -48,6 +48,11 @@ function constructRoads(room, maximumSites, maximumRoads, percentThreshold){
             return;
 
         const pos = new RoomPosition(parsed.x, parsed.y, room.name);
+
+        if(!utils.isWalkable(pos)){
+            continue;
+        }
+
         if(pos.createConstructionSite(STRUCTURE_ROAD) == 0){
             existingSites++;
             exisitngStructures++;

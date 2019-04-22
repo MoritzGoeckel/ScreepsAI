@@ -2,6 +2,9 @@ var utils = require('./opts.utils');
 var voteomat = require('./opts.voteomat');
 
 module.exports = {
+
+    // Todo: Maybe have a model with two methods per actions: OrderAction, PerformAction
+
     goSomewhereRandom: function (creep){
         creep.travelTo(new RoomPosition(Math.random() * 30 + 10, Math.random() * 30 + 10, creep.room.name));
     },
@@ -27,13 +30,23 @@ module.exports = {
     getEnergyFromSomewhere: function(creep){
         //Search for energy
         if(creep.memory.pickupPoint == undefined){
-            var closestResource = creep.pos.findClosestByRange(FIND_DROPPED_RESOURCES);
+            var closestResource = creep.pos.findClosestByRange(FIND_DROPPED_RESOURCES, {
+                filter: function(object) {
+                    return object.resourceType == RESOURCE_ENERGY;
+                }
+            });
 
             var closestContainer = creep.pos.findClosestByRange(FIND_STRUCTURES, {
                 filter: (structure) => structure.structureType == STRUCTURE_CONTAINER && structure.store[RESOURCE_ENERGY] > 0
             });
 
-            if(closestResource == null || 
+            var closestTombstone = creep.pos.findClosestByRange(FIND_TOMBSTONES, {
+                filter: (tombstone) => tombstone.store[RESOURCE_ENERGY] > 0
+            });
+
+            if(closestTombstone != null && creep.room.findPath(creep.pos, closestTombstone.pos).length < 30)
+                pickupPoint = closestTombstone;
+            else if(closestResource == null || 
                 (closestContainer != null && creep.room.findPath(creep.pos, closestContainer.pos).length < creep.room.findPath(creep.pos, closestResource.pos).length))
                 pickupPoint = closestContainer;
             else
@@ -50,13 +63,13 @@ module.exports = {
         {
             let pickupObject = Game.getObjectById(creep.memory.pickupPoint);
 
-            if(pickupObject == null){
+            if(pickupObject == null || (pickupObject.store != undefined && pickupObject.store[RESOURCE_ENERGY] == 0)){
                 creep.memory.pickupPoint = undefined;
                 delete creep.memory.pickupPoint;
                 return;
             }
 
-            if(pickupObject.structureType == STRUCTURE_CONTAINER){
+            if(pickupObject.structureType == STRUCTURE_CONTAINER || pickupObject.deathTime != undefined){
                 let result = creep.withdraw(pickupObject, RESOURCE_ENERGY);
                 if(result == ERR_NOT_IN_RANGE)
                     creep.travelTo(pickupObject.pos, {visualizePathStyle: {stroke: '#ffaa00'}, maxRooms: 1})
@@ -69,8 +82,6 @@ module.exports = {
             else if(creep.pickup(pickupObject) == ERR_NOT_IN_RANGE) {
                 creep.travelTo(pickupObject.pos, {visualizePathStyle: {stroke: '#ffaa00'}, maxRooms: 1});
             }else{
-                //Deque Memory.resourceQueue
-                
                 creep.memory.pickupPoint = undefined;
                 delete creep.memory.pickupPoint;
             }
@@ -79,7 +90,12 @@ module.exports = {
 
     getDroppedResources: function(creep){
         if(creep.memory.targetResource == undefined){
-            var target = creep.pos.findClosestByRange(FIND_DROPPED_RESOURCES);
+            var target = creep.pos.findClosestByRange(FIND_DROPPED_RESOURCES, {
+                filter: function(object) {
+                    return object.resourceType == RESOURCE_ENERGY;
+                }
+            });
+
             if(target == null)
                 return;
                 
@@ -102,38 +118,50 @@ module.exports = {
     },
 
     bringResourcesToExtensions: function(creep){
-        if(creep.memory.targetSink == undefined){
-            var target = creep.pos.findClosestByRange(FIND_STRUCTURES, {
+        if(creep.room.memory.reservedExtensions == undefined){
+            creep.room.memory.reservedExtensions = {};
+        }
+
+        if(creep.memory.targetExtensionSink == undefined){
+            let targets = creep.room.find(FIND_STRUCTURES, {
                     filter: (structure) => {
-                        return structure.structureType == STRUCTURE_EXTENSION && structure.energy < structure.energyCapacity;
+                        return (structure.structureType == STRUCTURE_EXTENSION || structure.structureType == STRUCTURE_SPAWN) && structure.energy < structure.energyCapacity 
+                            && (creep.room.memory.reservedExtensions[structure.id] == undefined || creep.room.memory.reservedExtensions[structure.id] < Game.time - 5);
                     }
             });
 
-            // Maybe have a queue
+            targets = targets.sort(function(a, b){ return utils.distance(a.pos, creep.pos) > utils.distance(b.pos, creep.pos); });            
 
-            if(target != null)
-                creep.memory.targetSink = target.id;
+            if(targets.length != 0){
+                creep.memory.targetExtensionSink = targets[0].id;
+            }
             else
                 return false;
         }
 
-        if(creep.memory.targetSink != undefined){
-            var targetSink = Game.getObjectById(creep.memory.targetSink);
+        if(creep.memory.targetExtensionSink != undefined){
+            var targetExtensionSink = Game.getObjectById(creep.memory.targetExtensionSink);
 
-            if(targetSink.energy == targetSink.energyCapacity)
+            if(targetExtensionSink == null || targetExtensionSink.energy == targetExtensionSink.energyCapacity)
             {
                 // Sink just got filled
-                delete creep.memory.targetSink;
+                delete creep.memory.targetExtensionSink;
+                delete creep.room.memory.reservedExtensions[creep.memory.targetExtensionSink];
                 return module.exports.bringResourcesToExtensions(creep); // Recoursion
             }
 
-            let result = creep.transfer(targetSink, RESOURCE_ENERGY);
+            let result = creep.transfer(targetExtensionSink, RESOURCE_ENERGY);
             if(result == ERR_NOT_IN_RANGE) {
+                creep.room.memory.reservedExtensions[creep.memory.targetExtensionSink] = Game.time;
                 voteomat.voteRoad(creep);
-                creep.travelTo(targetSink, {visualizePathStyle: {stroke: '#ffffff'}});
+                creep.travelTo(targetExtensionSink, {visualizePathStyle: {stroke: '#ffffff'}});
             }
             else if(result == OK){
-                delete creep.memory.targetSink;
+                delete creep.room.memory.reservedExtensions[creep.memory.targetExtensionSink];
+                delete creep.memory.targetExtensionSink;
+            }
+            else{
+                console.log("Strange error code when filling extension")
             }
         }
 
@@ -144,22 +172,14 @@ module.exports = {
         if(creep.memory.targetSink == undefined){
             var targets = creep.room.find(FIND_STRUCTURES, {
                     filter: (structure) => {
-                        return (structure.structureType == STRUCTURE_EXTENSION ||
-                                structure.structureType == STRUCTURE_SPAWN ||
-                                structure.structureType == STRUCTURE_CONTAINER ||
+                        return (structure.structureType == STRUCTURE_CONTAINER ||
                                 structure.structureType == STRUCTURE_TOWER)
                     }
             }).filter(structure => {
-                if(structure.structureType == STRUCTURE_CONTAINER && (structure.store[RESOURCE_ENERGY] + (structure.storeCapacity / 10.0)) < structure.storeCapacity) //Todo: only works for energy
-                    return true;
-
-                return structure.energy < structure.energyCapacity;
+                return (structure.structureType == STRUCTURE_CONTAINER && (structure.store[RESOURCE_ENERGY] + (structure.storeCapacity / 10.0)) < structure.storeCapacity); //Todo: only works for energy
             });
 
             targets = targets.sort(function(a, b){ return utils.distance(a.pos, creep.pos) > utils.distance(b.pos, creep.pos); });            
-
-            //Memory.resourceQueue todo:
-            //Move to resourceQueue target
 
             if(targets.length > 0) {
                 creep.memory.targetSink = targets[0].id;
@@ -171,8 +191,8 @@ module.exports = {
         if(creep.memory.targetSink != undefined){
             var targetSink = Game.getObjectById(creep.memory.targetSink);
 
-            if((targetSink.structureType == STRUCTURE_CONTAINER && targetSink.store[RESOURCE_ENERGY] == targetSink.storeCapacity) 
-                    || (targetSink.structureType != STRUCTURE_CONTAINER && targetSink.energy == targetSink.energyCapacity))
+            if(targetSink == null 
+                || (targetSink.structureType == STRUCTURE_CONTAINER && targetSink.store[RESOURCE_ENERGY] == targetSink.storeCapacity))
             {
                 // Sink just got filled
                 delete creep.memory.targetSink;
@@ -182,20 +202,39 @@ module.exports = {
             let result = creep.transfer(targetSink, RESOURCE_ENERGY);
             if(result == ERR_NOT_IN_RANGE) {
                 voteomat.voteRoad(creep);
-                creep.travelTo(targetSink, {visualizePathStyle: {stroke: '#ffffff'}});
+                creep.travelTo(targetSink);
             }
             else if(result == OK){
                 delete creep.memory.targetSink;
+            }
+            else{
+                console.log("Strange error code when filling container")
             }
         }
 
         return true;
     },
 
-    upgradeController(creep){
+    upgradeController: function(creep){
         if(creep.upgradeController(creep.room.controller) == ERR_NOT_IN_RANGE) {
             creep.travelTo(creep.room.controller, {visualizePathStyle: {stroke: '#ffffff'}, maxRooms: 1});
             voteomat.voteRoad(creep);
+        }
+    },
+
+    recycle: function(creep){
+        if(creep.memory.recycleSpawn == undefined){
+            let spawn = creep.pos.findClosestByPath(FIND_MY_STRUCTURES, {
+                filter: (i) => i.structureType == STRUCTURE_SPAWN
+            });
+
+            creep.memory.recycleSpawn = spawn.id;
+        }
+
+        if(creep.memory.recycleSpawn != undefined){
+            let targetSpawn = Game.getObjectById(creep.memory.recycleSpawn);
+            if(targetSpawn.recycleCreep(creep) == ERR_NOT_IN_RANGE)
+                creep.travelTo(targetSpawn);
         }
     }
 };

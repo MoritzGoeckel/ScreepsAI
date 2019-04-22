@@ -32,6 +32,8 @@ function placeCloseTo(room, pos, MAXIMUM){
                 let distance = Math.abs(xx - ROOM_CENTER) + Math.abs(yy - ROOM_CENTER);
                 let pos = new RoomPosition(xx, yy, room.name);
                 
+                // TODO: Not close to NON walkabels. Make nonwalkables around a function
+
                 if(distance < closestDistance && pos.look().filter(s => s.type == "structure").length == 0){
                     closestToCenter = pos;
                     closestDistance = distance;

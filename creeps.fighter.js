@@ -1,5 +1,6 @@
 var oneIn = require('./opts.rnd');
 var utils = require('./opts.utils');
+var behaviours = require('./creeps.behaviours');
 
 module.exports = {
     
@@ -12,7 +13,7 @@ module.exports = {
         }
 
         // Maybe should operate in groups
-        if(creep.memory.hostileTarget == undefined && oneIn(30)){
+        if(creep.memory.hostileTarget == undefined){
 
             //var fighter = _.filter(Game.creeps, (creep) => creep.memory.roleId == 'fighter'); 
             //if(fighter.length < 3) // Only fight in packs
@@ -27,6 +28,9 @@ module.exports = {
 
             if(targets.length != 0)
                 creep.memory.hostileTarget = targets[0].id;
+            else{
+                behaviours.getOutOfWay(creep);
+            }
         }
         else
         {
@@ -36,6 +40,9 @@ module.exports = {
                 if(creep.attack(target) != OK) {
                     creep.travelTo(target);
                 }
+            }
+            else{
+                delete creep.memory.hostileTarget;
             }
         }
 	}

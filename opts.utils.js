@@ -33,5 +33,9 @@ module.exports = {
         });
 
         return items;
+    },
+
+    isWalkable(pos){
+        return pos.look().filter(s => s.type == "structure" || (s.type == "terrain" && s.terrain == "wall")).length == 0;
     }
 };

@@ -4,6 +4,8 @@ var creepMgr = require('./creeps.default');
 
 var Traveler = require('opts.Traveler');
 
+var statisticsRunner = require('opts.statistics');
+
 var roadPlanner = require('./planner.road');
 var nobuildPlanner = require('./planner.nobuild');
 
@@ -31,6 +33,7 @@ module.exports.loop = function () {
         extentionPlanner.run(Game.rooms[r]);
         containerPlanner.run(Game.rooms[r]);
         nobuildPlanner.run(Game.rooms[r]);
+        statisticsRunner.run(Game.rooms[r]);
     }
 
     if(oneIn(30))

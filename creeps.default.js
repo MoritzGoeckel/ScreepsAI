@@ -1,4 +1,5 @@
 var utils = require('./opts.utils');
+var behaviours = require('./creeps.behaviours');
 
 module.exports = {
     run: function(creep) {
@@ -9,7 +10,12 @@ module.exports = {
             "builder":require("./creeps.builder"),
             "fighter":require("./creeps.fighter")
         };
-            
+        
+        if(creep.ticksToLive < 100){
+            behaviours.recycle(creep);
+            return;
+        }
+
         if(roles[creep.memory.roleId] != undefined)
             roles[creep.memory.roleId].run(creep);
         else
