@@ -2,7 +2,7 @@ var utils = require('./opts.utils');
 var oneIn = require('./opts.rnd');
 
 function cleanup(){
-    utils.logInform("Starting cleanup");
+    //utils.logInform("Starting cleanup");
     for(var name in Memory.creeps) {
         if(!Game.creeps[name]) {
             delete Memory.creeps[name];
@@ -13,7 +13,7 @@ function cleanup(){
 
 module.exports = {
     run: function() {
-        if(oneIn(214))
+        if(oneIn(5))
             cleanup();
 	}
 };

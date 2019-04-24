@@ -149,6 +149,7 @@ module.exports = {
 
         if(creep.memory.targetExtensionSink != undefined){
             var targetExtensionSink = Game.getObjectById(creep.memory.targetExtensionSink);
+            creep.room.visual.circle(targetExtensionSink.pos.x, targetExtensionSink.pos.y, {fill: 'transparent', radius: 0.5, stroke: 'red'});
 
             if(targetExtensionSink == null || targetExtensionSink.energy == targetExtensionSink.energyCapacity)
             {
@@ -176,6 +177,17 @@ module.exports = {
         return true;
     },
 
+    containerNeedResources: function(creep){
+        return creep.room.find(FIND_STRUCTURES, {
+            filter: (structure) => {
+                return (structure.structureType == STRUCTURE_CONTAINER ||
+                        structure.structureType == STRUCTURE_TOWER)
+            }
+        }).filter(structure => {
+            return (structure.structureType == STRUCTURE_CONTAINER && (structure.store[RESOURCE_ENERGY] + (structure.storeCapacity / 10.0)) < structure.storeCapacity); //Todo: only works for energy
+        }).length != 0;
+    },
+
     bringResourcesToContainers: function(creep){
         if(creep.memory.targetSink == undefined){
             var targets = creep.room.find(FIND_STRUCTURES, {
@@ -198,7 +210,7 @@ module.exports = {
 
         if(creep.memory.targetSink != undefined){
             var targetSink = Game.getObjectById(creep.memory.targetSink);
-
+            
             if(targetSink == null 
                 || (targetSink.structureType == STRUCTURE_CONTAINER && targetSink.store[RESOURCE_ENERGY] == targetSink.storeCapacity))
             {

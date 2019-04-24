@@ -29,7 +29,7 @@ function spawnOptimized(available, startAttributes, desirableAttributes, role, s
     let attributes = startAttributes;
 
     let i = 0;
-    while(getAttributesCost(attributes) < available){
+    while(getAttributesCost(attributes) < available && attributes.length < 30){ // Maybe set limit to 50
         attributes.push(desirableAttributes[i % desirableAttributes.length]);
         i++;
     }

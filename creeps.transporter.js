@@ -9,7 +9,7 @@ module.exports = {
         }
 
         if(creep.memory.doingExtensions == undefined){
-            if(creep.room.energyAvailable < creep.room.energyCapacityAvailable && _.sum(creep.carry) == 0){
+            if(creep.room.energyAvailable < creep.room.energyCapacityAvailable){
                 let numDoingExtensions = 0;
                 for(const name in Game.creeps) {
                     if(Game.creeps[name].memory.doingExtensions != undefined)
@@ -17,7 +17,7 @@ module.exports = {
                 }
                 //console.log("Doing extensions: " + numDoingExtensions)
 
-                if(numDoingExtensions < 3 && behaviours.unreservedExtensionsExist(creep))
+                if((numDoingExtensions < 3 && behaviours.unreservedExtensionsExist(creep)) || behaviours.containerNeedResources(creep) == false)
                     creep.memory.doingExtensions = true;
             }
         }
@@ -34,7 +34,7 @@ module.exports = {
         }
         
         if(creep.memory.doingExtensions != undefined){
-            if(_.sum(creep.carry) == 0){
+            if(_.sum(creep.carry) < 50){
                 creep.say("EXTENSION res")
                 behaviours.getEnergyFromSomewhere(creep);
             }
