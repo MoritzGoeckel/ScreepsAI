@@ -74,7 +74,7 @@ function checkSpawn(spawner) {
         let resources = spawner.room.find(FIND_SOURCES);
 
         let maxExtracters = (spawner.room.energyCapacityAvailable < 600 ? resources.length * 2 : resources.length);
-        let maxTransporters = resources.length * 3;
+        let maxTransporters = (spawner.room.energyCapacityAvailable < 600 ? resources.length * 3 : resources.length * 2);
         let maxUpgrader = 2;
         let maxBuilder = 1 + (spawner.room.energyCapacityAvailable < 600 ? existingConstructionSites * 2 : existingConstructionSites);
         let maxFighter = 3 * spawner.memory.enemies + 1;
