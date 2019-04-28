@@ -4,7 +4,7 @@ module.exports = {
     },
     
     logError: function(msg){
-        console.trace("Error: " + msg);
+        console.log("Error: " + msg);
     },
 
     shuffle: function(a) {
@@ -36,6 +36,26 @@ module.exports = {
     },
 
     isWalkable(pos){
-        return pos.look().filter(s => s.type == "structure" || (s.type == "terrain" && s.terrain == "wall")).length == 0;
+        return pos.look().filter(s => (s.type == "structure" && s.structure.structureType != "road") || (s.type == "terrain" && s.terrain == "wall")).length == 0;
+    },
+
+    isWalkableAround(pos){
+        for(let x = -1; x <= 1; x++){
+            for(let y = -1; y <= 1; y++){
+                if(x == 0 && y == 0)
+                    continue;
+
+                let candidate = new RoomPosition(pos.x + x, pos.y + y, pos.roomName);
+                if(!module.exports.isWalkable(candidate)){
+                    return false;
+                }
+            }
+        }
+
+        return true;
+    },
+
+    isInMap(x, y, border){
+        return x < 50 - border && x > border && y < 50 - border && y > border;
     }
 };

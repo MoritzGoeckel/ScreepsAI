@@ -1,13 +1,16 @@
 var utils = require('./opts.utils');
 var behaviours = require('./creeps.behaviours');
 
+let WALL_MAX_HITS = 10 * 1000;
+let RAMPART_MAX_HITS = 10 * 1000;
+let REPAIR_THRESHOLD = 0.8;
+
 var roleBuilder = {
 
     //creep.room.visual.circle(buildTarget.pos.x, buildTarget.pos.y, {fill: 'transparent', radius: 0.3, stroke: 'orange'});
 
     run: function(creep) {
 
-        let repairThreshold = 0.8;
 	    if(creep.carry.energy == 0){
             behaviours.getEnergyFromSomewhere(creep);
             return;
@@ -27,11 +30,11 @@ var roleBuilder = {
                 let structureToRepair = creep.pos.findClosestByRange(
                     FIND_STRUCTURES, 
                     {filter: (s) => 
-                        ((s.hits < s.hitsMax * repairThreshold) && 
-                        s.structureType != STRUCTURE_WALL && // Not repairing walls
-                        s.structureType != STRUCTURE_ROAD && // Not repairing roads
-                        s.structureType != STRUCTURE_RAMPART)
-                        || (s.structureType == STRUCTURE_RAMPART && s.hits < 100000)  // Reparing RAMPART with less hitpoints
+                        (
+                            (s.hits < s.hitsMax * REPAIR_THRESHOLD) 
+                            && (s.structureType != STRUCTURE_WALL || s.hits < WALL_MAX_HITS) 
+                            &&  s.structureType != STRUCTURE_ROAD
+                            && (s.structureType != STRUCTURE_RAMPART || s.hits < RAMPART_MAX_HITS))
                     });
 
                 if (structureToRepair != null) {
@@ -53,7 +56,12 @@ var roleBuilder = {
         if(creep.memory.structureToRepair != undefined){
             let structure = Game.getObjectById(creep.memory.structureToRepair);
 
-            if(structure == null || structure.hits >= structure.hitsMax){
+            if(structure == null ||                                                                                     // Over repair 20%
+                (structure.hits >= structure.hitsMax 
+                    || (structure.structureType == STRUCTURE_WALL && structure.hits > WALL_MAX_HITS + WALL_MAX_HITS * 0.2)
+                    || (structure.structureType == STRUCTURE_RAMPART && structure.hits > RAMPART_MAX_HITS + RAMPART_MAX_HITS * 0.2)                    
+                )
+            ){
                 delete creep.memory.structureToRepair;
             }
 

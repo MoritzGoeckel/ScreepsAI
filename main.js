@@ -13,6 +13,9 @@ var extentionPlanner = require('./planner.extention');
 
 var containerPlanner = require('./planner.container');
 
+var towerPlanner = require('./planner.tower');
+var wallsPlanner = require('./planner.walls');
+
 var oneIn = require('./opts.rnd');
 
 Memory.resourceQueue = [];
@@ -33,9 +36,13 @@ module.exports.loop = function () {
         extentionPlanner.run(Game.rooms[r]);
         containerPlanner.run(Game.rooms[r]);
         nobuildPlanner.run(Game.rooms[r]);
-        
+        towerPlanner.run(Game.rooms[r]);
+        wallsPlanner.run(Game.rooms[r]);
+
         if(oneIn(100))
             statisticsRunner.run(Game.rooms[r]);
+
+        //Game.rooms[r].visual.circle(25, 25, {fill: 'transparent', radius: 5, stroke: 'orange'});
     }
 
     if(oneIn(30))

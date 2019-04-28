@@ -25,7 +25,7 @@ function buildExtensions(room, maximumSites, maximumExtensions, radius) {
 
     //let positions = getSuitablePositions(room, radius);
 
-    let positions = getSuitablePositions_v2(room, radius);
+    let positions = getSuitablePositions(room, radius);
 
     if(positions.length == 0){
         console.log("Found no suitable positions for extensions");
@@ -52,94 +52,53 @@ function buildExtensions(room, maximumSites, maximumExtensions, radius) {
     }
 }
 
-function isInMap(x, y, border){
-    return x < 50 - border && x > border && y < 50 - border && y > border;
-}
-
-/*function getSuitablePositions(room, searchRadius){
+function getSuitablePositions(room, searchRadius){
     console.log("[Expensive] Running getSuitablePositions");
 
-    let sources = room.find(FIND_SOURCES);
-    let terrain = room.getTerrain();
-
-    let result = [];
-
-    for(let s in sources){
-        for(let x = -searchRadius / 2; x < searchRadius / 2; x++){
-            for(let y = -searchRadius / 2; y < searchRadius / 2; y++){
-                if(!isInMap(sources[s].pos.x + x, sources[s].pos.y + y, 7))
-                    continue;
-
-                let pos = new RoomPosition(sources[s].pos.x + x, sources[s].pos.y + y, room.name);
-
-                if(room.memory.nobuild[JSON.stringify({x: pos.x, y: pos.y})] == undefined 
-                    && terrain.get(pos.x, pos.y) != TERRAIN_MASK_WALL 
-                    && pos.look().filter(s => s.type == "structure").length == 0){
-
-                    //Next to wall
-                    let numWalls = 
-                      (terrain.get(pos.x + 1, pos.y + 0) == TERRAIN_MASK_WALL ? 1 : 0)
-                    + (terrain.get(pos.x - 1, pos.y + 0) == TERRAIN_MASK_WALL ? 1 : 0)
-                    + (terrain.get(pos.x + 0, pos.y + 1) == TERRAIN_MASK_WALL ? 1 : 0)
-                    + (terrain.get(pos.x + 0, pos.y - 1) == TERRAIN_MASK_WALL ? 1 : 0);
-                    
-                    let numRoads = 0;
-                    let radius = 6;
-                    for(let ox = -radius / 2; ox < radius / 2; ox++)
-                        for(let oy = -radius / 2; oy < radius / 2; oy++)
-                            numRoads +=  (room.memory.nobuild[JSON.stringify({x: pos.x + ox, y: pos.y + oy})] != undefined ? 1 : 0);
-
-                    let sourceDistance = Math.abs(pos.x - sources[s].pos.x) + Math.abs(pos.y - sources[s].pos.y);
-
-                    if(numWalls > 0 && sourceDistance > 1 && pos.x < 45 && pos.x > 5 && pos.y < 45 && pos.y > 5 && numRoads > 0){
-                        result.push(pos);
-                    }
-                }
-            }
-        }
+    //get Spawn
+    let spawns = room.find(FIND_MY_SPAWNS);
+    if(spawns.length != 1){
+        console.log("One spawn per room is allowed");
+        return;
     }
 
-    return result;
-}*/
-
-function getSuitablePositions_v2(room, searchRadius){
-    console.log("[Expensive] Running getSuitablePositions");
-
-    let sources = room.find(FIND_SOURCES);
+    let center = spawns[0].pos;
     let terrain = room.getTerrain();
 
     let scored = {};
 
-    for(let s in sources){
-        for(let x = -searchRadius / 2; x < searchRadius / 2; x++){
-            for(let y = -searchRadius / 2; y < searchRadius / 2; y++){
-                if(!isInMap(sources[s].pos.x + x, sources[s].pos.y + y, 7))
-                    continue;
+    for(let x = -searchRadius / 2; x < searchRadius / 2; x++){
+        for(let y = -searchRadius / 2; y < searchRadius / 2; y++){
+            if(!utils.isInMap(center.x + x, center.y + y, 4))
+                continue;
 
-                let pos = new RoomPosition(sources[s].pos.x + x, sources[s].pos.y + y, room.name);
+            let pos = new RoomPosition(center.x + x, center.y + y, room.name);
 
-                if(room.memory.nobuild[JSON.stringify({x: pos.x, y: pos.y})] == undefined 
-                    && terrain.get(pos.x, pos.y) != TERRAIN_MASK_WALL 
-                    && pos.look().filter(s => s.type == "structure").length == 0){
-                    
-                    let numRoads = 0;
-                    let radius = 6;
-                    for(let ox = -radius / 2; ox < radius / 2; ox++)
-                        for(let oy = -radius / 2; oy < radius / 2; oy++)
-                            numRoads += (room.memory.nobuild[JSON.stringify({x: pos.x + ox, y: pos.y + oy})] == undefined ? 0 : 1);
+            if(room.memory.nobuild[JSON.stringify({x: pos.x, y: pos.y})] == undefined 
+                && utils.isWalkable(pos)){
+                
+                let numRoads = 0;
+                let radius = 6;
+                for(let ox = -radius / 2; ox < radius / 2; ox++)
+                    for(let oy = -radius / 2; oy < radius / 2; oy++)
+                        numRoads += (room.memory.nobuild[JSON.stringify({x: pos.x + ox, y: pos.y + oy})] == undefined ? 0 : 1); // use plannerUtils.mayBuild
 
-                    let numWalls = 
-                        (terrain.get(pos.x + 1, pos.y + 0) == TERRAIN_MASK_WALL ? 1 : 0)
-                        + (terrain.get(pos.x - 1, pos.y + 0) == TERRAIN_MASK_WALL ? 1 : 0)
-                        + (terrain.get(pos.x + 0, pos.y + 1) == TERRAIN_MASK_WALL ? 1 : 0)
-                        + (terrain.get(pos.x + 0, pos.y - 1) == TERRAIN_MASK_WALL ? 1 : 0);
+                let numWalls = 
+                    (terrain.get(pos.x + 1, pos.y + 0) == TERRAIN_MASK_WALL ? 1 : 0)
+                    + (terrain.get(pos.x - 1, pos.y + 0) == TERRAIN_MASK_WALL ? 1 : 0)
+                    + (terrain.get(pos.x + 0, pos.y + 1) == TERRAIN_MASK_WALL ? 1 : 0)
+                    + (terrain.get(pos.x + 0, pos.y - 1) == TERRAIN_MASK_WALL ? 1 : 0);
 
-                    let sourceDistance = Math.abs(pos.x - sources[s].pos.x) + Math.abs(pos.y - sources[s].pos.y);
+                let spawnDistance = utils.distance(pos, center);
+                let controllerDistance = utils.distance(pos, room.controller.pos);
+                //let roomCenterDistance = utils.distance(pos, {x: 25, y:25});
 
-                    if(sourceDistance > 1 && pos.x < 45 && pos.x > 5 && pos.y < 45 && pos.y > 5 && (numWalls < 2 || numWalls == 3)
-                        && ((pos.x % 3 == 0 || pos.x % 3 == 1) && (pos.y % 3 == 0 || pos.y % 3 == 1))){
-                        scored[JSON.stringify(pos)] = numRoads / sourceDistance;
-                    }
+                let inPattern = (Math.abs(center.x - pos.x) % 3 == 0 || (Math.abs(center.x - pos.x) % 3 == 1))
+                             && (Math.abs(center.y - pos.y) % 3 == 0 || Math.abs(center.y - pos.y) % 3 == 1);
+
+                if(spawnDistance > 2 && utils.isInMap(pos.x, pos.y, 4) && (numWalls < 2 || numWalls == 3)
+                    && inPattern && controllerDistance > 5){
+                    scored[JSON.stringify(pos)] = 1 / spawnDistance;
                 }
             }
         }
@@ -149,7 +108,7 @@ function getSuitablePositions_v2(room, searchRadius){
 }
 
 function draw(room){
-    let poses = getSuitablePositions_v2(room, 30);
+    let poses = getSuitablePositions(room, 40);
     let i = 1;
     for(let p in poses){
         let pos = JSON.parse(poses[p][0])
@@ -160,7 +119,7 @@ function draw(room){
 module.exports = {
     run: function(room){
         if(oneIn(153))
-            buildExtensions(room, 1, 50, 30);
+            buildExtensions(room, 1, 100, 40);
 
         //draw(room);
     }

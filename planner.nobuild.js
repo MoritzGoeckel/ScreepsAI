@@ -37,18 +37,24 @@ function calculateNoBuilds(room){
 
     let spawns = room.find(FIND_MY_SPAWNS).map(s => s.pos);
     let sources = room.find(FIND_SOURCES).map(s => s.pos);
-    let exits_v2 = [room.find(FIND_EXIT_TOP), room.find(FIND_EXIT_RIGHT), room.find(FIND_EXIT_BOTTOM), room.find(FIND_EXIT_LEFT)].map(arr => arr[Math.floor(arr.length / 2)]);
+    let exits_v2 = [room.find(FIND_EXIT_TOP), room.find(FIND_EXIT_RIGHT), room.find(FIND_EXIT_BOTTOM), room.find(FIND_EXIT_LEFT)]
+        .map(arr => arr[Math.floor(arr.length / 2)])
+        .filter(pos => pos != null);
+
     let exits = [
         room.controller.pos.findClosestByPath(FIND_EXIT_TOP),
         room.controller.pos.findClosestByPath(FIND_EXIT_RIGHT),
         room.controller.pos.findClosestByPath(FIND_EXIT_BOTTOM),
         room.controller.pos.findClosestByPath(FIND_EXIT_LEFT)
-    ]
+    ].filter(pos => pos != null);
+
     let controller = room.controller.pos;
 
     let importantPoints = sources.concat(exits, controller, exits_v2); //Spawns
     
     let points = [];
+
+    console.log(exits_v2)
 
     for(let s in spawns){
         for(let i in importantPoints){
@@ -81,6 +87,6 @@ module.exports = {
         if(room.memory.nobuild == undefined)
             calculateNoBuilds(room);
 
-        //draw(room);
+        draw(room);
 	}
 };

@@ -4,6 +4,8 @@ var behaviours = require('./creeps.behaviours');
 module.exports = {
     run: function(creep) {
 
+        // TODO: Balance containers
+
         if(creep.room.energyAvailable == creep.room.energyCapacityAvailable){
             delete creep.memory.doingExtensions;
         }
@@ -24,22 +26,25 @@ module.exports = {
 
         if(creep.memory.doingExtensions == undefined){
             if(_.sum(creep.carry) == 0){
-                creep.say("CONTAINER res")
+                //creep.say("CONTAINER res")
                 behaviours.getDroppedResources(creep);
             }
             else{
-                creep.say("CONTAINER")
-                behaviours.bringResourcesToContainers(creep);
+                //creep.say("CONTAINER")
+                if(behaviours.bringResourcesToContainers(creep) == false){
+                    creep.say("Idle")
+                    behaviours.getOutOfWay(creep);
+                }
             }
         }
         
         if(creep.memory.doingExtensions != undefined){
             if(_.sum(creep.carry) < 50){
-                creep.say("EXTENSION res")
+                //creep.say("EXTENSION res")
                 behaviours.getEnergyFromSomewhere(creep);
             }
             else{
-                creep.say("EXTENSION")
+                //creep.say("EXTENSION")
                 if(!behaviours.unreservedExtensionsExist(creep))
                     delete creep.memory.doingExtensions;
 

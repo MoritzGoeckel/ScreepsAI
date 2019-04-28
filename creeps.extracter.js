@@ -1,5 +1,7 @@
 var utils = require('./opts.utils');
 var voteomat = require('./opts.voteomat');
+var _ = require('lodash');
+var behaviours = require('./creeps.behaviours');
 
 module.exports = {
     run: function(creep) {
@@ -43,8 +45,9 @@ module.exports = {
             creep.travelTo(assignedSource.pos, {visualizePathStyle: {stroke: '#ffaa00'}, maxRooms: 1});
         }
 
-        for(var resourceType in creep.carry) {
-            creep.drop(resourceType);
+        if(creep.carryCapacity != 0 && _.sum(creep.carry) == creep.carryCapacity){
+            if(behaviours.bringResourcesToContainers(creep, 3) == false)
+                behaviours.dropEverything(creep);
         }
 	}
 };
