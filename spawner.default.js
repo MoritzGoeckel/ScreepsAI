@@ -23,13 +23,16 @@ function getAttributesCost(attrs){
     return costs;
 }
 
-function spawnOptimized(available, startAttributes, desirableAttributes, role, spawner){
+function spawnOptimized(available, startAttributes, desirableAttributes, role, spawner, energyLimit){
     console.log("Spawning: " + role);
     
     let attributes = startAttributes;
 
     let i = 0;
-    while(getAttributesCost(attributes) < available && attributes.length < 30){ // Maybe set limit to 50
+    while(getAttributesCost(attributes) < available 
+    && attributes.length < 30 // Maybe set limit to 50 
+    && getAttributesCost(attributes) < energyLimit) // Dont spawn too expensive creeps
+    { 
         attributes.push(desirableAttributes[i % desirableAttributes.length]);
         i++;
     }
@@ -46,6 +49,8 @@ function spawnOptimized(available, startAttributes, desirableAttributes, role, s
         console.log("Spawn not possible, reason: " + result + " with " + attributes);
     }
 }
+
+const EXTENSION_SIZE = 50;
 
 function checkSpawn(spawner) {
     
@@ -73,14 +78,19 @@ function checkSpawn(spawner) {
         let existingConstructionSites = spawner.room.find(FIND_CONSTRUCTION_SITES).length;
         let resources = spawner.room.find(FIND_SOURCES);
 
-        let maxExtracters = (spawner.room.energyCapacityAvailable < 600 ? resources.length * 2 : resources.length);
+        let existingTowers = spawner.room.find(FIND_MY_STRUCTURES, {filter: (i) => i.structureType == STRUCTURE_TOWER && i.energy > i.energyCapacity * 0.5}).length;
+        
+        let storage = spawner.pos.findClosestByRange(FIND_STRUCTURES, {filter: {structureType: STRUCTURE_STORAGE}});
+
+        let maxExtracters = resources.length;
         let maxTransporters = (spawner.room.energyCapacityAvailable < 600 ? resources.length * 3 : resources.length * 2);
-        let maxUpgrader = 2;
+        let maxUpgrader = 3;
         
         let maxBuilder = 1 + (spawner.room.energyCapacityAvailable < 600 ? existingConstructionSites * 2 : existingConstructionSites);
         maxBuilder = Math.min(maxBuilder, 6);
 
-        let maxFighter = 3 * spawner.memory.enemies + 1;
+        let maxFighter = 3 * spawner.memory.enemies + (1 - existingTowers);
+        maxFighter = Math.max(maxFighter, 0);
 
         console.log( "Creeps in room: " + '\n'
         + " Extracter: " + extracters.length + "/" + maxExtracters + '\n'
@@ -90,24 +100,33 @@ function checkSpawn(spawner) {
         + " Fighter: " + fighter.length + "/" + maxFighter + '\n'
         );
 
+        let standartEnergyLimit = 14 * EXTENSION_SIZE;
+
         if(extracters.length > 0 && transporter.length > 0 && fighter.length < maxFighter) {
-            spawnOptimized(available, [MOVE, ATTACK], [ATTACK, MOVE, TOUGH, TOUGH, TOUGH], 'fighter', spawner);
+            spawnOptimized(available, [MOVE, ATTACK], [ATTACK, MOVE, TOUGH, TOUGH, TOUGH], 'fighter', spawner, standartEnergyLimit);
         }
 
         else if(extracters.length < maxExtracters && extracters.length <= transporter.length) {
-            spawnOptimized(available, [MOVE, WORK], [WORK, WORK, WORK, MOVE], 'extracter', spawner);
+            let extracterEnergyLimit = 14 * EXTENSION_SIZE;
+            spawnOptimized(available, [MOVE, WORK], [WORK, WORK, WORK, MOVE], 'extracter', spawner, extracterEnergyLimit); // 14 * EXTENSION_SIZE is perfect
         }
 
         else if(transporter.length < maxTransporters) {
-            spawnOptimized(available, [MOVE, CARRY], [CARRY, MOVE], 'transporter', spawner);
+            let transporterEnergyLimit = 20 * EXTENSION_SIZE;
+            spawnOptimized(available, [MOVE, CARRY], [CARRY, MOVE], 'transporter', spawner, transporterEnergyLimit);
         }
 
         else if(upgrader.length < maxUpgrader) {
-            spawnOptimized(available, [MOVE, WORK, CARRY, MOVE], [WORK, WORK, MOVE], 'upgrader', spawner);
+            let upgraderPriceLimit = standartEnergyLimit;
+            if(storage != null){
+                let energyStock = storage.store[RESOURCE_ENERGY];
+                upgraderPriceLimit = Math.max(energyStock / 30, standartEnergyLimit);
+            }
+            spawnOptimized(available, [MOVE, WORK, CARRY, MOVE], [WORK, WORK, WORK, CARRY, MOVE], 'upgrader', spawner, upgraderPriceLimit);
         }
 
         else if(builder.length < maxBuilder) {
-            spawnOptimized(available, [MOVE, MOVE, WORK, CARRY], [CARRY, MOVE, WORK, WORK, MOVE], 'builder', spawner);
+            spawnOptimized(available, [MOVE, MOVE, WORK, CARRY], [CARRY, MOVE, WORK, WORK, MOVE], 'builder', spawner, standartEnergyLimit);
         }
     }
 }

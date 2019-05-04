@@ -11,10 +11,12 @@ module.exports = {
             "fighter":require("./creeps.fighter")
         };
         
-        if(creep.ticksToLive < 100){
-            behaviours.recycle(creep);
-            return;
-        }
+        // TODO: Maybe refresh creep?
+        
+        //if(creep.ticksToLive < 100){
+        //    behaviours.recycle(creep);
+        //    return;
+        //}
 
         if(roles[creep.memory.roleId] != undefined)
             roles[creep.memory.roleId].run(creep);

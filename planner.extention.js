@@ -1,5 +1,6 @@
 var oneIn = require('./opts.rnd');
 var utils = require('./opts.utils');
+var constructionUtils = require('./planner.utils');
 
 function buildExtensions(room, maximumSites, maximumExtensions, radius) {
     utils.logInform("Checking extention constructions in " + room);
@@ -52,6 +53,7 @@ function buildExtensions(room, maximumSites, maximumExtensions, radius) {
     }
 }
 
+// This should be possible with the utils function "near spawn"
 function getSuitablePositions(room, searchRadius){
     console.log("[Expensive] Running getSuitablePositions");
 
@@ -67,37 +69,40 @@ function getSuitablePositions(room, searchRadius){
 
     let scored = {};
 
-    for(let x = -searchRadius / 2; x < searchRadius / 2; x++){
-        for(let y = -searchRadius / 2; y < searchRadius / 2; y++){
-            if(!utils.isInMap(center.x + x, center.y + y, 4))
+    for(let x = -searchRadius; x < searchRadius; x++){
+        for(let y = -searchRadius; y < searchRadius; y++){
+            if(!utils.isInMap(center.x + x, center.y + y, 3))
                 continue;
 
             let pos = new RoomPosition(center.x + x, center.y + y, room.name);
 
+            let spawnDistance = utils.distance(pos, center);
+            if(spawnDistance > searchRadius)
+                continue;
+
             if(room.memory.nobuild[JSON.stringify({x: pos.x, y: pos.y})] == undefined 
                 && utils.isWalkable(pos)){
                 
-                let numRoads = 0;
-                let radius = 6;
-                for(let ox = -radius / 2; ox < radius / 2; ox++)
-                    for(let oy = -radius / 2; oy < radius / 2; oy++)
-                        numRoads += (room.memory.nobuild[JSON.stringify({x: pos.x + ox, y: pos.y + oy})] == undefined ? 0 : 1); // use plannerUtils.mayBuild
+                //let numRoads = 0;
+                //let radius = 6;
+                //for(let ox = -radius / 2; ox < radius / 2; ox++)
+                //    for(let oy = -radius / 2; oy < radius / 2; oy++)
+                //        numRoads += (room.memory.nobuild[JSON.stringify({x: pos.x + ox, y: pos.y + oy})] == undefined ? 0 : 1); // use plannerUtils.mayBuild
 
-                let numWalls = 
-                    (terrain.get(pos.x + 1, pos.y + 0) == TERRAIN_MASK_WALL ? 1 : 0)
-                    + (terrain.get(pos.x - 1, pos.y + 0) == TERRAIN_MASK_WALL ? 1 : 0)
-                    + (terrain.get(pos.x + 0, pos.y + 1) == TERRAIN_MASK_WALL ? 1 : 0)
-                    + (terrain.get(pos.x + 0, pos.y - 1) == TERRAIN_MASK_WALL ? 1 : 0);
+                //let numWalls = 
+                //    (terrain.get(pos.x + 1, pos.y + 0) == TERRAIN_MASK_WALL ? 1 : 0)
+                //    + (terrain.get(pos.x - 1, pos.y + 0) == TERRAIN_MASK_WALL ? 1 : 0)
+                //    + (terrain.get(pos.x + 0, pos.y + 1) == TERRAIN_MASK_WALL ? 1 : 0)
+                //    + (terrain.get(pos.x + 0, pos.y - 1) == TERRAIN_MASK_WALL ? 1 : 0);
 
-                let spawnDistance = utils.distance(pos, center);
                 let controllerDistance = utils.distance(pos, room.controller.pos);
                 //let roomCenterDistance = utils.distance(pos, {x: 25, y:25});
 
-                let inPattern = (Math.abs(center.x - pos.x) % 3 == 0 || (Math.abs(center.x - pos.x) % 3 == 1))
-                             && (Math.abs(center.y - pos.y) % 3 == 0 || Math.abs(center.y - pos.y) % 3 == 1);
+                //&& (numWalls < 2 || numWalls == 3)
 
-                if(spawnDistance > 2 && utils.isInMap(pos.x, pos.y, 4) && (numWalls < 2 || numWalls == 3)
-                    && inPattern && controllerDistance > 5){
+                if(spawnDistance > 1
+                    && constructionUtils.isOnPattern(pos, center) 
+                    && controllerDistance > 1){
                     scored[JSON.stringify(pos)] = 1 / spawnDistance;
                 }
             }
@@ -108,7 +113,7 @@ function getSuitablePositions(room, searchRadius){
 }
 
 function draw(room){
-    let poses = getSuitablePositions(room, 40);
+    let poses = getSuitablePositions(room, 8);
     let i = 1;
     for(let p in poses){
         let pos = JSON.parse(poses[p][0])
@@ -119,7 +124,7 @@ function draw(room){
 module.exports = {
     run: function(room){
         if(oneIn(153))
-            buildExtensions(room, 1, 100, 40);
+            buildExtensions(room, 1, 100, 10);
 
         //draw(room);
     }

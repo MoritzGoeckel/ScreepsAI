@@ -9,6 +9,6 @@ module.exports = {
         //    constructionUtils.checkConstruction(room, room.controller.pos, STRUCTURE_TOWER);
 
         if(oneIn(160))
-            constructionUtils.checkNearSpawns(room, STRUCTURE_TOWER, 5, 6); // TODO: As far away from each other as possible
+            constructionUtils.checkNearSpawns(room, STRUCTURE_TOWER, 5, 10); // TODO: As far away from each other as possible
 	}
 };

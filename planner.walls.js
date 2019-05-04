@@ -14,15 +14,16 @@ function getCandidates(room, radius){
     let terrain = room.getTerrain();
 
     function addIfNeedsWall(pos){
-        if(utils.isWalkable(new RoomPosition(pos.x, pos.y, room.name))){
-            if(constructionUtils.mayBuild(pos, room)){
-                // That is a wall
-                scored[JSON.stringify(pos)] = 1;
-            }
-            else{
-                // That is a rampard
-                scored[JSON.stringify(pos)] = 2;
-            }
+        if(!utils.isInMap(pos.x, pos.y, 0))
+            return;
+        
+        if(constructionUtils.mayBuild(pos, room)){
+            // That is a wall
+            scored[JSON.stringify(pos)] = 1;
+        }
+        else{
+            // That is a rampard
+            scored[JSON.stringify(pos)] = 2;
         }
     }
 
@@ -52,7 +53,48 @@ function getCandidates(room, radius){
 
     console.log("Building walls: " + Object.keys(scored).length)
 
-    return  utils.dictToScoreSortedList(scored);
+    function add(pos){
+        if(utils.isInMap(pos.x, pos.y, 0) && utils.isWalkable(new RoomPosition(pos.x, pos.y, room.name))){
+            if(constructionUtils.mayBuild(pos, room))
+                additions[JSON.stringify(pos)] = 1; // Wall
+            else
+                additions[JSON.stringify(pos)] = 2; // Rampart
+        }
+    }
+    
+    let additions = {};
+    
+    for(let k in scored){
+        let parsed = JSON.parse(k);
+        
+        if(additions[JSON.stringify({x: parsed.x, y: parsed.y + 1})] == undefined && (scored[JSON.stringify({x: parsed.x + 1, y: parsed.y + 1})] != undefined || scored[JSON.stringify({x: parsed.x - 1, y: parsed.y + 1})] != undefined)){
+            // Unten
+            add({x: parsed.x, y: parsed.y + 1});
+        }
+        
+        else if(additions[JSON.stringify({x: parsed.x, y: parsed.y - 1})] == undefined && (scored[JSON.stringify({x: parsed.x + 1, y: parsed.y - 1})] != undefined || scored[JSON.stringify({x: parsed.x - 1, y: parsed.y - 1})] != undefined)){
+            // Oben
+            add({x: parsed.x, y: parsed.y - 1});
+        }
+    }
+
+    for(let k in additions){
+        scored[k] = additions[k];
+    }
+    
+    let output = {};
+    for(let k in scored){
+        let parsed = JSON.parse(k);
+        
+        // This might look starge if there are already walls build
+        //room.visual.circle(parsed.x, parsed.y, {fill: 'transparent', radius: 0.5, stroke: 'orange'});
+        
+        if(utils.isWalkable(new RoomPosition(parsed.x, parsed.y, room.name))){
+            output[k] = scored[k];
+        }
+    }
+
+    return  utils.dictToScoreSortedList(output);
 }
 
 function checkConstruct(room, candidates){
@@ -60,7 +102,7 @@ function checkConstruct(room, candidates){
         let posParsed = JSON.parse(candidates[p][0])
         let pos = new RoomPosition(posParsed.x, posParsed.y, room.name);
 
-        let result = pos.createConstructionSite(candidates[p][0] == 1 ? STRUCTURE_WALL : STRUCTURE_RAMPART);
+        let result = pos.createConstructionSite(candidates[p][1] == 1 ? STRUCTURE_WALL : STRUCTURE_RAMPART);
         if(result != 0){
             console.log("Wall building failed: " + result);
             break;
@@ -79,13 +121,11 @@ function draw(room, candidates){
 module.exports = {
     run: function(room) {
         //draw(room,
-        //    getCandidates(room, 7)
+        //    getCandidates(room, 12)
         //);
 
         if(oneIn(171)){
-            // Thats a double wall
-            checkConstruct(room, getCandidates(room, 7));
-            checkConstruct(room, getCandidates(room, 8));
+            checkConstruct(room, getCandidates(room, 12));
         }
 	}
 };

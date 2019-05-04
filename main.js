@@ -16,9 +16,21 @@ var containerPlanner = require('./planner.container');
 var towerPlanner = require('./planner.tower');
 var wallsPlanner = require('./planner.walls');
 
+var towersBehaviour = require('./defence.tower');
+
 var oneIn = require('./opts.rnd');
 
 Memory.resourceQueue = [];
+
+// Todo: Transporter claiming. 
+// Claiming other rooms. 
+// Have dedicated transport creeps for spawner.
+// Tune price limits
+// Have container for sources. Blacklist them. Let them be filled only by extracters
+// Upgrader go closer
+// Renew creep
+
+// Base umfang in config
 
 module.exports.loop = function () {
     cleanup.run();
@@ -41,6 +53,8 @@ module.exports.loop = function () {
 
         if(oneIn(100))
             statisticsRunner.run(Game.rooms[r]);
+
+        towersBehaviour.run(Game.rooms[r]);
 
         //Game.rooms[r].visual.circle(25, 25, {fill: 'transparent', radius: 5, stroke: 'orange'});
     }

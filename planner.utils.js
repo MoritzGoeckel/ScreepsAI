@@ -2,6 +2,11 @@ var utils = require('./opts.utils');
 var oneIn = require('./opts.rnd');
 
 module.exports = {
+    isOnPattern(pos, ref){
+        return (Math.abs(ref.x - pos.x) % 3 == 0 || (Math.abs(ref.x - pos.x) % 3 == 1))
+            && (Math.abs(ref.y - pos.y) % 3 == 0 || Math.abs(ref.y - pos.y) % 3 == 1);
+    },
+    
     checkNearSpawns(room, type, maxNumStructureNearby, searchDistance){
         let spawns = room.find(FIND_STRUCTURES).filter(function(structure) {
             return structure.structureType == STRUCTURE_SPAWN;
@@ -42,8 +47,6 @@ module.exports = {
     getSuitablePositionCloseTo(room, targetPosition, structureType, maxNumStructureNearby, searchDistance){
         console.log("Expensive getSuitablePositionCloseTo " + structureType);
     
-        let scored = {};
-    
         let existingSites = targetPosition.findInRange(FIND_CONSTRUCTION_SITES, searchDistance).filter(function(site) {
             return site.structureType == structureType;
         }).length;
@@ -60,12 +63,22 @@ module.exports = {
             return [];
         }
         
-        for(let x = -searchDistance / 2; x < searchDistance / 2; x++){
-            for(let y = -searchDistance / 2; y < searchDistance / 2; y++){
+        var spawn = targetPosition.findClosestByRange(FIND_MY_STRUCTURES, {filter: { structureType: STRUCTURE_SPAWN }});
+        if(spawn == null){
+            console.log("Suitable positions did not find a spawn");
+            return [];
+        }
+        
+        let scored = {};
+        
+        for(let x = -searchDistance; x < searchDistance; x++){
+            for(let y = -searchDistance; y < searchDistance; y++){
                 let candidate = new RoomPosition(targetPosition.x + x, targetPosition.y + y, room.name);
     
                 if(room.memory.nobuild[JSON.stringify({x: candidate.x, y: candidate.y})] == undefined && 
-                    utils.isWalkable(candidate) && utils.isWalkableAround(candidate)){
+                    utils.isWalkable(candidate) && module.exports.isOnPattern(candidate, spawn.pos)){ //utils.isWalkableAround(candidate)
+    
+                    //room.visual.circle(candidate.x, candidate.y, {fill: 'transparent', radius: 1, stroke: 'red'});
     
                     let distance = utils.distance(candidate, targetPosition);
                     if(distance < 2)

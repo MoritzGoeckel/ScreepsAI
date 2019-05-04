@@ -1,15 +1,21 @@
 var utils = require('./opts.utils');
 var voteomat = require('./opts.voteomat');
+var constructionUtils = require('./planner.utils');
 
 module.exports = {
 
     // Todo: Maybe have a model with two methods per actions: OrderAction, PerformAction
 
     goSomewhereRandom: function (creep){
-        creep.travelTo(new RoomPosition(Math.random() * 30 + 10, Math.random() * 30 + 10, creep.room.name));
+        creep.travelTo(new RoomPosition(Math.random() * 30 + 1, Math.random() * 30 + 1, creep.room.name));
     },
     
     getOutOfWay: function (creep){
+        if(constructionUtils.mayBuild(creep.pos, creep.room) == false){
+            module.exports.goSomewhereRandom(creep);
+            return;
+        }
+        
         var closestCreep = creep.room.find(FIND_CREEPS).filter(c => c.id != creep.id && utils.distance(creep.pos, c.pos) < 3);
         if(closestCreep.length == 0)
             return;
@@ -20,7 +26,16 @@ module.exports = {
         if(utils.distance(closestCreep.pos, creep.pos) > 2)
             return;
     
-        let target = new RoomPosition(creep.pos.x * 2 - closestCreep.pos.x, creep.pos.y * 2 - closestCreep.pos.y, creep.room.name);
+        let x = creep.pos.x * 2 - closestCreep.pos.x;
+        let y = creep.pos.y * 2 - closestCreep.pos.y;
+        
+        x = Math.max(x, 1);
+        x = Math.min(x, 49);
+        
+        y = Math.max(y, 1);
+        y = Math.min(y, 49);
+    
+        let target = new RoomPosition(x, y, creep.room.name);
         //creep.room.visual.circle(target.x, target.y, {fill: 'transparent', radius: 0.5, stroke: 'red'});
         if(creep.travelTo(target) != OK){
             module.exports.goSomewhereRandom(creep);
@@ -39,7 +54,8 @@ module.exports = {
             });
 
             var closestContainer = creep.pos.findClosestByRange(FIND_STRUCTURES, {
-                filter: (structure) => structure.structureType == STRUCTURE_CONTAINER && structure.store[RESOURCE_ENERGY] > 0
+                filter: (structure) => (structure.structureType == STRUCTURE_CONTAINER || structure.structureType == STRUCTURE_STORAGE) 
+                                        && structure.store[RESOURCE_ENERGY] > 0
             });
 
             var closestTombstone = creep.pos.findClosestByRange(FIND_TOMBSTONES, {
@@ -71,7 +87,10 @@ module.exports = {
                 return;
             }
 
-            if(pickupObject.structureType == STRUCTURE_CONTAINER || pickupObject.deathTime != undefined){
+            if(pickupObject.structureType == STRUCTURE_CONTAINER 
+                || pickupObject.structureType == STRUCTURE_STORAGE 
+                || pickupObject.deathTime != undefined)
+            {
                 let result = creep.withdraw(pickupObject, RESOURCE_ENERGY);
                 if(result == ERR_NOT_IN_RANGE)
                     creep.travelTo(pickupObject.pos, {visualizePathStyle: {stroke: '#ffaa00'}, maxRooms: 1})
@@ -97,12 +116,16 @@ module.exports = {
                     return object.resourceType == RESOURCE_ENERGY;
                 }
             });
-
+            
+            // TODO: Create claim. Only go to unclaimed resources (amount)
+            // Same thing for containers
+            // Balance containers. Maybe have priority containers
+            
             // Scoring with lowest of (distance / amount)
-            targets = targets.sort(function(a, b){ return utils.distance(a.pos, creep.pos) / a.amount > utils.distance(b.pos, creep.pos) / b.amount; });           
+            targets = targets.sort(function(a, b){ return (utils.distance(a.pos, creep.pos) / a.amount) > (utils.distance(b.pos, creep.pos) / b.amount); });           
 
             if(targets.length != 0){
-                creep.memory.targetResource = targets[0].id;;
+                creep.memory.targetResource = targets[0].id;
             }
             else
                 return false;
@@ -122,6 +145,7 @@ module.exports = {
         }
     },
 
+    // Also fills towers because of priority
     unreservedExtensionsExist: function(creep){
         if(creep.room.memory.reservedExtensions == undefined){
             creep.room.memory.reservedExtensions = {};
@@ -130,7 +154,7 @@ module.exports = {
         if(creep.memory.targetExtensionSink == undefined){
             let targets = creep.room.find(FIND_STRUCTURES, {
                     filter: (structure) => {
-                        return (structure.structureType == STRUCTURE_EXTENSION || structure.structureType == STRUCTURE_SPAWN) && structure.energy < structure.energyCapacity 
+                        return (structure.structureType == STRUCTURE_EXTENSION || structure.structureType == STRUCTURE_SPAWN || structure.structureType == STRUCTURE_TOWER) && structure.energy < structure.energyCapacity 
                             && (creep.room.memory.reservedExtensions[structure.id] == undefined || creep.room.memory.reservedExtensions[structure.id] < Game.time - 5);
                     }
             });
@@ -185,11 +209,13 @@ module.exports = {
     containerNeedResources: function(creep){
         return creep.room.find(FIND_STRUCTURES, {
             filter: (structure) => {
-                return (structure.structureType == STRUCTURE_CONTAINER ||
-                        structure.structureType == STRUCTURE_TOWER)
+                return (structure.structureType == STRUCTURE_CONTAINER 
+                || structure.structureType == STRUCTURE_STORAGE
+                || structure.structureType == STRUCTURE_TOWER)
             }
         }).filter(structure => {
-            return (structure.structureType == STRUCTURE_CONTAINER && (structure.store[RESOURCE_ENERGY] + (structure.storeCapacity / 10.0)) < structure.storeCapacity); //Todo: only works for energy
+            return ((structure.structureType == STRUCTURE_CONTAINER || structure.structureType == STRUCTURE_STORAGE) 
+                    && (structure.store[RESOURCE_ENERGY] + (structure.storeCapacity / 10.0)) < structure.storeCapacity); //Todo: only works for energy
         }).length != 0;
     },
 
@@ -201,11 +227,12 @@ module.exports = {
             var targets = creep.room.find(FIND_STRUCTURES, {
                     filter: (structure) => {
                         return (structure.structureType == STRUCTURE_CONTAINER ||
+                                structure.structureType == STRUCTURE_STORAGE ||
                                 structure.structureType == STRUCTURE_TOWER)
                     }
             }).filter(structure => {
-                return ((structure.structureType == STRUCTURE_CONTAINER && (structure.store[RESOURCE_ENERGY] + (structure.storeCapacity / 10.0)) < structure.storeCapacity)
-                    || (structure.structureType == STRUCTURE_TOWER && (structure.energy + (structure.energyCapacity / 10.0)) < structure.energyCapacity))
+                return (((structure.structureType == STRUCTURE_CONTAINER || structure.structureType == STRUCTURE_STORAGE) && (structure.store[RESOURCE_ENERGY] + (structure.storeCapacity / 10.0)) < structure.storeCapacity)
+                    || (structure.structureType == STRUCTURE_TOWER && structure.energy < structure.energyCapacity))
                     && utils.distance(structure.pos, creep.pos) < maxDistance; //Todo: only works for energy
             });
 
