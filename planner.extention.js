@@ -81,7 +81,7 @@ function getSuitablePositions(room, searchRadius){
                 continue;
 
             if(room.memory.nobuild[JSON.stringify({x: pos.x, y: pos.y})] == undefined 
-                && utils.isWalkable(pos)){
+                && utils.isWalkable(pos)){ // && constructionUtils.isReachable(room, pos)
                 
                 //let numRoads = 0;
                 //let radius = 6;

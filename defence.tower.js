@@ -5,7 +5,7 @@ function repair(tower){
     
     var closestDamagedStructure = tower.pos.findClosestByRange(FIND_STRUCTURES, {filter: (s) => 
         s.hits < s.hitsMax * 0.9
-        && utils.distance(s.pos, tower.pos) < 25
+        && utils.distance(s.pos, tower.pos) < 100 // Should also repair far structures
         && s.structureType != STRUCTURE_ROAD
         && ((s.structureType != STRUCTURE_WALL 
             && s.structureType != STRUCTURE_RAMPART)

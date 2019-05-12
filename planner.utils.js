@@ -2,9 +2,35 @@ var utils = require('./opts.utils');
 var oneIn = require('./opts.rnd');
 
 module.exports = {
+    drawPattern(room){
+        let spawns = room.find(FIND_MY_SPAWNS);
+        if(spawns.length != 1){
+            console.log("One spawn per room is allowed");
+            return;
+        }
+
+        let ref = spawns[0].pos;
+        for(let x = 0; x < 50; x++){
+            for(let y = 0; y < 50; y++){ 
+                let candidate = new RoomPosition(x, y, room.name);
+                if(module.exports.isOnPattern(candidate, ref)){
+                    room.visual.circle(candidate.x, candidate.y, {fill: 'blue', radius: 0.3, stroke: 'blue'});
+                }
+            }
+        }
+    },
+   
+    // TODO: Not tested 
+    isReachable(room, dest){
+        let origin = room.controller.pos;
+        return PathFinder.search(origin, dest).incomplete == false;
+    },
+    
     isOnPattern(pos, ref){
         return (Math.abs(ref.x - pos.x) % 3 == 0 || (Math.abs(ref.x - pos.x) % 3 == 1))
-            && (Math.abs(ref.y - pos.y) % 3 == 0 || Math.abs(ref.y - pos.y) % 3 == 1);
+            && (Math.abs(ref.y - pos.y) % 3 == 0 || Math.abs(ref.y - pos.y) % 3 == 1)
+            && ref.x != pos.x
+            && ref.y != pos.y;
     },
     
     checkNearSpawns(room, type, maxNumStructureNearby, searchDistance){
@@ -76,7 +102,7 @@ module.exports = {
                 let candidate = new RoomPosition(targetPosition.x + x, targetPosition.y + y, room.name);
     
                 if(room.memory.nobuild[JSON.stringify({x: candidate.x, y: candidate.y})] == undefined && 
-                    utils.isWalkable(candidate) && module.exports.isOnPattern(candidate, spawn.pos)){ //utils.isWalkableAround(candidate)
+                    utils.isWalkable(candidate) && module.exports.isOnPattern(candidate, spawn.pos)){ //&& && module.exports.isReachable(room, candidate) && utils.isWalkableAround(candidate)
     
                     //room.visual.circle(candidate.x, candidate.y, {fill: 'transparent', radius: 1, stroke: 'red'});
     

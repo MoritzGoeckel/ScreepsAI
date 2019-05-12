@@ -1,6 +1,7 @@
 var utils = require('./opts.utils');
 var voteomat = require('./opts.voteomat');
 var constructionUtils = require('./planner.utils');
+var claimMgr = require('./opts.claimmgr');
 
 module.exports = {
 
@@ -40,27 +41,29 @@ module.exports = {
         if(creep.travelTo(target) != OK){
             module.exports.goSomewhereRandom(creep);
         }
-    },
+    }, 
 
     getEnergyFromSomewhere: function(creep){
         //Search for energy
+        //creep.say("Energy")
         if(creep.memory.pickupPoint == undefined){
-            // Maybe use a scoring system just like in getDroppedFromSomewhere
 
             var closestResource = creep.pos.findClosestByRange(FIND_DROPPED_RESOURCES, {
                 filter: function(object) {
-                    return object.resourceType == RESOURCE_ENERGY;
+                    return object.resourceType == RESOURCE_ENERGY && object.amount > claimMgr.claimedAmount(object.id);
                 }
             });
 
             var closestContainer = creep.pos.findClosestByRange(FIND_STRUCTURES, {
                 filter: (structure) => (structure.structureType == STRUCTURE_CONTAINER || structure.structureType == STRUCTURE_STORAGE) 
-                                        && structure.store[RESOURCE_ENERGY] > 0
+                                        && structure.store[RESOURCE_ENERGY] > claimMgr.claimedAmount(structure.id)
             });
 
             var closestTombstone = creep.pos.findClosestByRange(FIND_TOMBSTONES, {
-                filter: (tombstone) => tombstone.store[RESOURCE_ENERGY] > 0
+                filter: (tombstone) => tombstone.store[RESOURCE_ENERGY] > claimMgr.claimedAmount(tombstone.id)
             });
+
+            // TODO: Scoring?
 
             if(closestTombstone != null && creep.room.findPath(creep.pos, closestTombstone.pos).length < 30)
                 pickupPoint = closestTombstone;
@@ -74,17 +77,25 @@ module.exports = {
                 //let path = creep.room.findPath(creep.pos, pickupPoint.pos, { maxOps: 5 });
                 //if(path.length && path.length <= 5)
                 creep.memory.pickupPoint = pickupPoint.id;
+                claimMgr.claimTransport(creep, pickupPoint.id);
             }
         }
+       
         
         if(creep.memory.pickupPoint != undefined)
         {
             let pickupObject = Game.getObjectById(creep.memory.pickupPoint);
 
-            if(pickupObject == null || (pickupObject.store != undefined && pickupObject.store[RESOURCE_ENERGY] == 0)){
+            function removeTarget(){
+                claimMgr.unclaimTransport(creep, creep.memory.pickupPoint);
                 creep.memory.pickupPoint = undefined;
                 delete creep.memory.pickupPoint;
                 return;
+            }
+
+
+            if(pickupObject == null || (pickupObject.store != undefined && pickupObject.store[RESOURCE_ENERGY] == 0)){
+                return removeTarget();
             }
 
             if(pickupObject.structureType == STRUCTURE_CONTAINER 
@@ -96,20 +107,19 @@ module.exports = {
                     creep.travelTo(pickupObject.pos, {visualizePathStyle: {stroke: '#ffaa00'}, maxRooms: 1})
                 
                 if(result == ERR_NOT_ENOUGH_RESOURCES || result == OK){
-                    creep.memory.pickupPoint = undefined;
-                    delete creep.memory.pickupPoint;
+                    return removeTarget();
                 }
             }
             else if(creep.pickup(pickupObject) == ERR_NOT_IN_RANGE) {
                 creep.travelTo(pickupObject.pos, {visualizePathStyle: {stroke: '#ffaa00'}, maxRooms: 1});
             }else{
-                creep.memory.pickupPoint = undefined;
-                delete creep.memory.pickupPoint;
+                return removeTarget();
             }
         }
     },
 
     getDroppedResources: function(creep){
+        //creep.say("Dropped")
         if(creep.memory.targetResource == undefined){
             let targets = creep.room.find(FIND_DROPPED_RESOURCES, {
                 filter: function(object) {
@@ -117,15 +127,16 @@ module.exports = {
                 }
             });
             
-            // TODO: Create claim. Only go to unclaimed resources (amount)
-            // Same thing for containers
-            // Balance containers. Maybe have priority containers
+            // Balance containers. Maybe have priority containers 
             
-            // Scoring with lowest of (distance / amount)
-            targets = targets.sort(function(a, b){ return (utils.distance(a.pos, creep.pos) / a.amount) > (utils.distance(b.pos, creep.pos) / b.amount); });           
+            targets = targets.sort(function(a, b){ 
+                return (utils.distance(a.pos, creep.pos) / (a.amount - claimMgr.claimedAmount(a.id))) 
+                    > (utils.distance(b.pos, creep.pos) / (b.amount - claimMgr.claimedAmount(b.id))); 
+            });           
 
             if(targets.length != 0){
                 creep.memory.targetResource = targets[0].id;
+                claimMgr.claimTransport(creep, creep.memory.targetResource);
             }
             else
                 return false;
@@ -133,14 +144,22 @@ module.exports = {
         
         if(creep.memory.targetResource != undefined) {
             let target = Game.getObjectById(creep.memory.targetResource);
-            if(target == null){
+            
+            function removeTarget(){
+                claimMgr.unclaimTransport(creep, creep.memory.targetResource);
                 delete creep.memory.targetResource;
-                return;
+            }
+            
+            if(target == null){
+                removeTarget();
             }
 
-            if(creep.pickup(target) == ERR_NOT_IN_RANGE) {
+            let result = creep.pickup(target)
+            if(result == ERR_NOT_IN_RANGE) {
                 voteomat.voteRoad(creep);
                 creep.travelTo(target, {visualizePathStyle: {stroke: '#ffaa00'}, maxRooms: 1});
+            } else {
+                removeTarget();
             }
         }
     },
@@ -276,6 +295,11 @@ module.exports = {
     },
 
     upgradeController: function(creep){
+        if(utils.distance(creep.pos, creep.room.controller.pos) > 2){
+            if(creep.travelTo(creep.room.controller) == OK)
+                return;
+        }
+        
         if(creep.upgradeController(creep.room.controller) == ERR_NOT_IN_RANGE) {
             creep.travelTo(creep.room.controller, {visualizePathStyle: {stroke: '#ffffff'}, maxRooms: 1});
             voteomat.voteRoad(creep);

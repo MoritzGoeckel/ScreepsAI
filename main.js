@@ -19,12 +19,15 @@ var wallsPlanner = require('./planner.walls');
 var towersBehaviour = require('./defence.tower');
 
 var oneIn = require('./opts.rnd');
+var claimMgr = require('./opts.claimmgr');
+
+var constructionUtils = require('./planner.utils');
 
 Memory.resourceQueue = [];
 
-// Todo: Transporter claiming. 
-// Claiming other rooms. 
-// Have dedicated transport creeps for spawner.
+// Todo: Transporter claiming of resources
+// Claiming other rooms
+// Have dedicated transport creeps for spawner / extensions
 // Tune price limits
 // Have container for sources. Blacklist them. Let them be filled only by extracters
 // Upgrader go closer
@@ -56,9 +59,14 @@ module.exports.loop = function () {
 
         towersBehaviour.run(Game.rooms[r]);
 
+        //Debugging purpose
+        //constructionUtils.drawPattern(Game.rooms[r]);
+
         //Game.rooms[r].visual.circle(25, 25, {fill: 'transparent', radius: 5, stroke: 'orange'});
     }
 
     if(oneIn(30))
         console.log("Bucket: " + Game.cpu.bucket)
+
+    claimMgr.run();
 }

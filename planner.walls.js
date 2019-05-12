@@ -2,13 +2,7 @@ var utils = require('./opts.utils');
 var oneIn = require('./opts.rnd');
 var constructionUtils = require('./planner.utils');
 
-function getCandidates(room, radius){
-    let spawns = room.find(FIND_MY_SPAWNS);
-    if(spawns.length != 1){
-        console.log("One spawn per room is allowed");
-        return;
-    }
-
+function getCandidatesInCircle(room, center, radius){
     let scored = {};
 
     let terrain = room.getTerrain();
@@ -26,8 +20,6 @@ function getCandidates(room, radius){
             scored[JSON.stringify(pos)] = 2;
         }
     }
-
-    let center = spawns[0].pos;
 
     let d = 3 - (2 * radius);
     let x = 0;
@@ -97,12 +89,16 @@ function getCandidates(room, radius){
     return  utils.dictToScoreSortedList(output);
 }
 
-function checkConstruct(room, candidates){
+function checkConstruct(room, candidates, structure){
     for(let p in candidates){
         let posParsed = JSON.parse(candidates[p][0])
         let pos = new RoomPosition(posParsed.x, posParsed.y, room.name);
+       
+        let structureActual = structure;
+        if(structureActual == undefined) 
+            structureActual = candidates[p][1] == 1 ? STRUCTURE_WALL : STRUCTURE_RAMPART;
 
-        let result = pos.createConstructionSite(candidates[p][1] == 1 ? STRUCTURE_WALL : STRUCTURE_RAMPART);
+        let result = pos.createConstructionSite(structureActual);
         if(result != 0){
             console.log("Wall building failed: " + result);
             break;
@@ -118,14 +114,32 @@ function draw(room, candidates){
     }
 }
 
+function getCandidatesAroundSpawn(room, radius){
+    let spawns = room.find(FIND_MY_SPAWNS);
+    if(spawns.length != 1){
+        console.log("One spawn per room is allowed");
+        return;
+    }
+ 
+    let center = spawns[0].pos;
+    return getCandidatesInCircle(room, center, radius);
+}
+
 module.exports = {
     run: function(room) {
-        //draw(room,
-        //    getCandidates(room, 12)
-        //);
+            //draw(room,
+            //    getCandidatesAroundSpawn(room, 12)
+            //);
 
-        if(oneIn(171)){
-            checkConstruct(room, getCandidates(room, 12));
-        }
+            if(oneIn(171)){
+                checkConstruct(room, getCandidatesAroundSpawn(room, 12));
+            }
+            
+            if(oneIn(183)){
+                checkConstruct(room, getCandidatesInCircle(room, room.controller.pos, 3), STRUCTURE_RAMPART);
+                checkConstruct(room, getCandidatesInCircle(room, room.controller.pos, 2), STRUCTURE_RAMPART);
+                checkConstruct(room, getCandidatesInCircle(room, room.controller.pos, 1), STRUCTURE_RAMPART);
+            }
+
 	}
 };
