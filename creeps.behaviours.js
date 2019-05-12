@@ -64,7 +64,7 @@ module.exports = {
             let tombstones = creep.room.find(FIND_TOMBSTONES, {
                 filter: (tombstone) => tombstone.store[RESOURCE_ENERGY] > claimMgr.claimedAmount(tombstone.id)
             });
-            targets = targets.concat(tombstones.map(r => {c.score = c.store[RESOURCE_ENERGY]; return c;}));
+            targets = targets.concat(tombstones.map(c => {c.score = c.store[RESOURCE_ENERGY]; return c;}));
 
             targets = targets.sort(function(a, b){ 
                 return (utils.distance(a.pos, creep.pos) / (a.score - claimMgr.claimedAmount(a.id))) 
