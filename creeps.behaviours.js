@@ -47,40 +47,37 @@ module.exports = {
         //Search for energy
         //creep.say("Energy")
         if(creep.memory.pickupPoint == undefined){
-
-            var closestResource = creep.pos.findClosestByRange(FIND_DROPPED_RESOURCES, {
+            let targets = [];
+            let droppedResources = creep.room.find(FIND_DROPPED_RESOURCES, {
                 filter: function(object) {
                     return object.resourceType == RESOURCE_ENERGY && object.amount > claimMgr.claimedAmount(object.id);
                 }
-            });
-
-            var closestContainer = creep.pos.findClosestByRange(FIND_STRUCTURES, {
+            }); 
+            targets = targets.concat(droppedResources.map(r => {r.score = r.amount; return r;}));
+            
+            let containers = creep.room.find(FIND_STRUCTURES, {
                 filter: (structure) => (structure.structureType == STRUCTURE_CONTAINER || structure.structureType == STRUCTURE_STORAGE) 
                                         && structure.store[RESOURCE_ENERGY] > claimMgr.claimedAmount(structure.id)
             });
-
-            var closestTombstone = creep.pos.findClosestByRange(FIND_TOMBSTONES, {
+            targets = targets.concat(containers.map(c => {c.score = c.store[RESOURCE_ENERGY]; return c;}));
+            
+            let tombstones = creep.room.find(FIND_TOMBSTONES, {
                 filter: (tombstone) => tombstone.store[RESOURCE_ENERGY] > claimMgr.claimedAmount(tombstone.id)
             });
+            targets = targets.concat(tombstones.map(r => {c.score = c.store[RESOURCE_ENERGY]; return c;}));
 
-            // TODO: Scoring?
-
-            if(closestTombstone != null && creep.room.findPath(creep.pos, closestTombstone.pos).length < 30)
-                pickupPoint = closestTombstone;
-            else if(closestResource == null || 
-                (closestContainer != null && creep.room.findPath(creep.pos, closestContainer.pos).length < creep.room.findPath(creep.pos, closestResource.pos).length))
-                pickupPoint = closestContainer;
-            else
-                pickupPoint = closestResource;
-
-            if(pickupPoint != null){
-                //let path = creep.room.findPath(creep.pos, pickupPoint.pos, { maxOps: 5 });
-                //if(path.length && path.length <= 5)
-                creep.memory.pickupPoint = pickupPoint.id;
-                claimMgr.claimTransport(creep, pickupPoint.id);
-            }
+            targets = targets.sort(function(a, b){ 
+                return (utils.distance(a.pos, creep.pos) / (a.score - claimMgr.claimedAmount(a.id))) 
+                    > (utils.distance(b.pos, creep.pos) / (b.score - claimMgr.claimedAmount(b.id))); 
+            }); 
+           
+            //console.log(JSON.stringify(targets)) 
+            if(targets.length == 0)
+                return; 
+ 
+            creep.memory.pickupPoint = targets[0].id;
+            claimMgr.claimTransport(creep, targets[0].id);
         }
-       
         
         if(creep.memory.pickupPoint != undefined)
         {
@@ -123,7 +120,7 @@ module.exports = {
         if(creep.memory.targetResource == undefined){
             let targets = creep.room.find(FIND_DROPPED_RESOURCES, {
                 filter: function(object) {
-                    return object.resourceType == RESOURCE_ENERGY;
+                    return object.resourceType == RESOURCE_ENERGY && object.amount > claimMgr.claimedAmount(object.id);
                 }
             });
             

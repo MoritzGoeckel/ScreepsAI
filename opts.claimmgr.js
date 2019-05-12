@@ -51,8 +51,9 @@ module.exports = {
                     amount = object.store[RESOURCE_ENERGY];
                 } 
                 let claimed = module.exports.claimedAmount(object.id);
-                object.room.visual.circle(object.pos.x, object.pos.y, {fill: 'green', radius: Math.log(amount) / 3, stroke: 'green'});
-                object.room.visual.circle(object.pos.x, object.pos.y, {fill: 'transparent', radius: Math.log(claimed) / 3, stroke: 'grey'});
+                let claimedNum = module.exports.claimedNum(object.id);
+                object.room.visual.text("C" + claimed + "/" + amount + " (" + claimedNum + ")", 
+                                        object.pos.x, object.pos.y, {color: 'white', font: 0.8});
             }
         }
 
@@ -104,4 +105,15 @@ module.exports = {
         return sum;
     },
     
+    claimedNum: function(pickupPointId){
+        if(Memory.transportClaims == undefined){
+            return 0;
+        }
+
+        if(Memory.transportClaims[pickupPointId] == undefined){ 
+            return 0;
+        }
+
+        return Memory.transportClaims[pickupPointId].length;
+    },
 }
