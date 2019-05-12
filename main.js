@@ -54,8 +54,7 @@ module.exports.loop = function () {
         towerPlanner.run(Game.rooms[r]);
         wallsPlanner.run(Game.rooms[r]);
 
-        if(oneIn(100))
-            statisticsRunner.run(Game.rooms[r]);
+        statisticsRunner.run(Game.rooms[r]);
 
         towersBehaviour.run(Game.rooms[r]);
 

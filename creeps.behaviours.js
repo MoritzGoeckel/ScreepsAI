@@ -53,25 +53,24 @@ module.exports = {
                     return object.resourceType == RESOURCE_ENERGY && object.amount > claimMgr.claimedAmount(object.id);
                 }
             }); 
-            targets = targets.concat(droppedResources.map(r => {r.score = r.amount; return r;}));
+            targets = targets.concat(droppedResources.map(r => {r.score = r.amount * 2; return r;})); // Double priority for dropped resources
             
             let containers = creep.room.find(FIND_STRUCTURES, {
                 filter: (structure) => (structure.structureType == STRUCTURE_CONTAINER || structure.structureType == STRUCTURE_STORAGE) 
                                         && structure.store[RESOURCE_ENERGY] > claimMgr.claimedAmount(structure.id)
             });
-            targets = targets.concat(containers.map(c => {c.score = c.store[RESOURCE_ENERGY]; return c;}));
+            targets = targets.concat(containers.map(c => {c.score = c.store[RESOURCE_ENERGY]; return c;})); // Normal priority for container
             
             let tombstones = creep.room.find(FIND_TOMBSTONES, {
                 filter: (tombstone) => tombstone.store[RESOURCE_ENERGY] > claimMgr.claimedAmount(tombstone.id)
             });
-            targets = targets.concat(tombstones.map(c => {c.score = c.store[RESOURCE_ENERGY]; return c;}));
+            targets = targets.concat(tombstones.map(c => {c.score = c.store[RESOURCE_ENERGY] * 1.5; return c;})); // 1.5 priority for tombstone
 
             targets = targets.sort(function(a, b){ 
                 return (utils.distance(a.pos, creep.pos) / (a.score - claimMgr.claimedAmount(a.id))) 
                     > (utils.distance(b.pos, creep.pos) / (b.score - claimMgr.claimedAmount(b.id))); 
             }); 
            
-            //console.log(JSON.stringify(targets)) 
             if(targets.length == 0)
                 return; 
  

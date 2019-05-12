@@ -1,9 +1,8 @@
 # Todo
 
-* Better logging
+* Multi room harvesting / Transport
 * Centralized Caching (for search operations)
 * Container for extractor?
 * Attack
-* Multi room harvesting / Transport
-* Tower
+* Better logging
 * Have your own statistics: Time -> Controller state, Time -> Energy used / tick
