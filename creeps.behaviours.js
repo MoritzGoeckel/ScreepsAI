@@ -185,6 +185,7 @@ module.exports = {
                     }
             });
 
+            // TODO: Seems to not work. Is filling wierd extensions that are far away
             targets = targets.sort(function(a, b){ return utils.distance(a.pos, creep.pos) > utils.distance(b.pos, creep.pos); });            
 
             if(targets.length != 0){

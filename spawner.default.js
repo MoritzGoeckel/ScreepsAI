@@ -1,4 +1,5 @@
 var oneIn = require('./opts.rnd');
+var creepsManager = require('./manager.creeps');
 
 var guidelines = require('./guidelines');
 
@@ -42,8 +43,10 @@ function spawnOptimized(available, startAttributes, desirableAttributes, role, s
 
     if(spawner.memory["lastid"] == undefined)
         spawner.memory["lastid"] = 1;
-    
-    let result = spawner.spawnCreep(attributes, "Nomad_" + spawner.memory["lastid"]++, {memory: {roleId: role}});
+   
+    let id = parseInt(spawner.memory["lastid"]);
+    spawner.memory["lastid"] = id + 1;
+    let result = spawner.spawnCreep(attributes, "Nomad_" + id + "_" + role, {memory: {roleId: role, home: spawner.room.name}});
     if(result == 0){
         console.log("Spawned: " + attributes);
     }
@@ -53,89 +56,60 @@ function spawnOptimized(available, startAttributes, desirableAttributes, role, s
 }
 
 const EXTENSION_SIZE = 50;
+const STANDART_ENERGY_LIMIT = 14 * EXTENSION_SIZE;
 
-let maintainedClasses = [
-    {role: "extracter", priority: 0, amount: 2}, // One per source
-    {role: "transporter", priority: 1, amount: 4}, // Depends on energy max
-    {role: "builder", priority: 2, amount: 1}, // Depends on construction sites
-    {role: "upgrader", priority: 2, amount: 1}, // Depends on energy and setting
-    {role: "fighter", priority: 0, amount: 0} // Depends on enemies
-];
+const CLASS_BLUEPRINTS = {
+    fighter: {baseParts: [MOVE, ATTACK], additionalParts: [ATTACK, MOVE, TOUGH, TOUGH, TOUGH], priceLimit: STANDART_ENERGY_LIMIT},
+    extracter: {baseParts: [MOVE, WORK], additionalParts: [WORK, WORK, WORK, MOVE], priceLimit: 14 * EXTENSION_SIZE},
+    transporter: {baseParts: [MOVE, CARRY], additionalParts: [CARRY, MOVE], priceLimit: 20 * EXTENSION_SIZE},
+    upgrader: {baseParts: [MOVE, WORK, CARRY, MOVE], additionalParts: [WORK, WORK, WORK, CARRY, MOVE], priceLimit: STANDART_ENERGY_LIMIT},
+    builder: {baseParts: [MOVE, MOVE, WORK, CARRY], additionalParts: [CARRY, MOVE, WORK, WORK, MOVE], priceLimit: STANDART_ENERGY_LIMIT}
+}
 
 function checkSpawn(spawner) {    
+    if(spawner.spawning != null)
+        return;
+
     let available = spawner.room.energyAvailable; //energyCapacityAvailable
     
     if(available < 300)
         return;
 
-    //console.log("Spawn energy: " + spawner.energy);
-    //console.log("Room energy: " + spawner.room.energyAvailable);
+    let maintainedClasses = creepsManager.getCreepsToMaintain(spawner.room);
 
-    // This could be done in one loop
-    let extracters = _.filter(Game.creeps, (creep) => creep.memory.roleId == 'extracter');
-    let transporter = _.filter(Game.creeps, (creep) => creep.memory.roleId == 'transporter');
-    let upgrader = _.filter(Game.creeps, (creep) => creep.memory.roleId == 'upgrader');
-    let builder = _.filter(Game.creeps, (creep) => creep.memory.roleId == 'builder'); 
-    let fighter = _.filter(Game.creeps, (creep) => creep.memory.roleId == 'fighter'); 
+    let candidate = {priority: 99999, existing: 99999, isdummy: true};
 
-    if(extracters.length > 0 && transporter.length > 0 && spawner.room.energyAvailable < spawner.room.energyCapacityAvailable)
-        return; // Only when all extensions are full
+    let keys = Object.keys(maintainedClasses);
+    for(let i in keys) {
+        let role = keys[i];
+        let entry = maintainedClasses[role];
 
-    if(spawner.spawning == null)
-    {
-        let existingConstructionSites = spawner.room.find(FIND_CONSTRUCTION_SITES).length;
-        let resources = spawner.room.find(FIND_SOURCES);
+        let existing = _.filter(Game.creeps, (creep) => creep.memory.roleId == role && creep.memory.home == spawner.room.name).length;
 
-        let existingTowers = spawner.room.find(FIND_MY_STRUCTURES, {filter: (i) => i.structureType == STRUCTURE_TOWER && i.energy > i.energyCapacity * 0.5}).length;
-        
-        let storage = spawner.pos.findClosestByRange(FIND_STRUCTURES, {filter: {structureType: STRUCTURE_STORAGE}});
-
-        let maxExtracters = resources.length;
-        let maxTransporters = (spawner.room.energyCapacityAvailable < 600 ? resources.length * 3 : resources.length * 2);
-        let maxUpgrader = 3;
-        
-        let maxBuilder = 1 + (spawner.room.energyCapacityAvailable < 600 ? existingConstructionSites * 2 : existingConstructionSites);
-        maxBuilder = Math.min(maxBuilder, 6); 
-
-        let maxFighter = guidelines.getRequiredFighters(spawner.room);
-
-        console.log( "Creeps in room: " + '\n'
-        + " Extracter: " + extracters.length + "/" + maxExtracters + '\n'
-        + " Transporter: " + transporter.length + "/" + maxTransporters + '\n'
-        + " Upgrader: " + upgrader.length + "/" + maxUpgrader + '\n'
-        + " Builder: " + builder.length + "/" + maxBuilder + '\n'
-        + " Fighter: " + fighter.length + "/" + maxFighter + '\n'
-        );
-
-        let standartEnergyLimit = 14 * EXTENSION_SIZE;
-
-        if(extracters.length > 0 && transporter.length > 0 && fighter.length < maxFighter) {
-            spawnOptimized(available, [MOVE, ATTACK], [ATTACK, MOVE, TOUGH, TOUGH, TOUGH], 'fighter', spawner, standartEnergyLimit);
-        }
-
-        else if(extracters.length < maxExtracters && extracters.length <= transporter.length) {
-            let extracterEnergyLimit = 14 * EXTENSION_SIZE;
-            spawnOptimized(available, [MOVE, WORK], [WORK, WORK, WORK, MOVE], 'extracter', spawner, extracterEnergyLimit); // 14 * EXTENSION_SIZE is perfect
-        }
-
-        else if(transporter.length < maxTransporters) {
-            let transporterEnergyLimit = 20 * EXTENSION_SIZE;
-            spawnOptimized(available, [MOVE, CARRY], [CARRY, MOVE], 'transporter', spawner, transporterEnergyLimit);
-        }
-
-        else if(upgrader.length < maxUpgrader) {
-            let upgraderPriceLimit = standartEnergyLimit;
-            if(storage != null){
-                let energyStock = storage.store[RESOURCE_ENERGY];
-                upgraderPriceLimit = Math.max(energyStock / 30, standartEnergyLimit);
-            }
-            spawnOptimized(available, [MOVE, WORK, CARRY, MOVE], [WORK, WORK, WORK, CARRY, MOVE], 'upgrader', spawner, upgraderPriceLimit);
-        }
-
-        else if(builder.length < maxBuilder) {
-            spawnOptimized(available, [MOVE, MOVE, WORK, CARRY], [CARRY, MOVE, WORK, WORK, MOVE], 'builder', spawner, standartEnergyLimit);
+        if(entry.amount > existing 
+        && (entry.priority < candidate.priority 
+           || (entry.priority == candidate.priority && existing < candidate.existing))){
+            candidate = entry;
+            candidate.role = role;
+            candidate.existing = existing;
         }
     }
+
+    if(candidate.isdummy == true)
+        return;
+
+    if(candidate.priority >= 10 && spawner.room.energyAvailable < spawner.room.energyCapacityAvailable)
+        return; // Only when all extensions are full
+
+    console.log(JSON.stringify(candidate));
+   
+    let blueprint = CLASS_BLUEPRINTS[candidate.role];
+    if(blueprint == undefined){
+        console.log("Role " + candidate.role + " not found in blueprints");
+        return;
+    }
+
+    spawnOptimized(available, blueprint.baseParts, blueprint.additionalParts, candidate.role, spawner, blueprint.priceLimit);
 }
 
 module.exports = {

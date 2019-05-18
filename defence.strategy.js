@@ -1,4 +1,7 @@
+var creepsMgr = require('./manager.creeps');
 var guidelines = require('./guidelines');
+
+var oneIn = require('./opts.rnd');
 
 module.exports = {
     run: function(room){        
@@ -9,8 +12,7 @@ module.exports = {
         }
 
         let enemies = room.find(FIND_HOSTILE_CREEPS).length;
-        guidelines.setRequiredFighters(enemies * 2, room);
-         
+        creepsMgr.setCreepToMaintainAmount("fighter", enemies * 2, room);
         guidelines.setStayInside(enemies != 0, room);
     }
 }

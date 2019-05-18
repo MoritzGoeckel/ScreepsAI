@@ -39,14 +39,6 @@ module.exports = {
         return 0.9;
     },
 
-    getRequiredFighters: function(room){
-        return getWithDefault("MAX_FIGHTERS", 0, room);
-    },
-    
-    setRequiredFighters: function(value, room){
-        set("MAX_FIGHTERS", value, room); 
-    },
-
     getStayInside: function(room){
         return getWithDefault("STAY_INSIDE", 0, room);
     },

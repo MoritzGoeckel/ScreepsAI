@@ -17,6 +17,7 @@ var extentionPlanner = require('./planner.extention');
 
 var containerPlanner = require('./planner.container');
 
+var creepsMgr = require('./manager.creeps');
 var towerPlanner = require('./planner.tower');
 var wallsPlanner = require('./planner.walls');
 
@@ -64,6 +65,8 @@ module.exports.loop = function () {
 
         towersBehaviour.run(Game.rooms[r]);
         defence.run(Game.rooms[r]);
+
+        creepsMgr.run(Game.rooms[r]);
 
         //Debugging purpose
         //constructionUtils.drawPattern(Game.rooms[r]);
