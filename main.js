@@ -27,21 +27,22 @@ var oneIn = require('./opts.rnd');
 var claimMgr = require('./opts.claimmgr');
 
 var constructionUtils = require('./planner.utils');
+var expansionMgr = require('./expansion.strategy');
 
 Memory.resourceQueue = [];
 
-// Todo: Transporter claiming of resources
-// Claiming other rooms
-// Have dedicated transport creeps for spawner / extensions
-// Tune price limits
-// Have container for sources. Blacklist them. Let them be filled only by extracters
-// Upgrader go closer
-// Renew creep
-
-// Base umfang in config
+// TODO LIST
+// * Regulate the amount of upgrading / storing
+// * Claiming other rooms
+// * Have dedicated transport creeps for spawner / extensions
+// * Tune price limits
+// * Have container for sources. Blacklist them. Let them be filled only by extracters
+// * Base umfang in config
 
 module.exports.loop = function () {
     cleanup.run();
+
+    expansionMgr.run(); 
 
     for(var name in Game.creeps) {
         creepMgr.run(Game.creeps[name]);

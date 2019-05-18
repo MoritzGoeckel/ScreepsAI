@@ -23,8 +23,10 @@ module.exports = {
         if(roles[creep.memory.roleId] != "fighter" && guidelines.getStayInside(creep.room)){
             let busy = behaviours.goIntoSafety(creep);
             
-            if(busy)
+            if(busy){
+                delete creep.memory.target; // generally used for most roleId's
                 return;
+            }
         }
 
         if(roles[creep.memory.roleId] != undefined)

@@ -13,7 +13,7 @@ module.exports = {
         }
 
         // Maybe should operate in groups
-        if(creep.memory.hostileTarget == undefined){
+        if(creep.memory.hostile == undefined){
 
             //var fighter = _.filter(Game.creeps, (creep) => creep.memory.roleId == 'fighter'); 
             //if(fighter.length < 3) // Only fight in packs
@@ -27,14 +27,15 @@ module.exports = {
                 targets = creep.room.find(FIND_HOSTILE_STRUCTURES);
 
             if(targets.length != 0)
-                creep.memory.hostileTarget = targets[0].id;
+                creep.memory.hostile = targets[0].id;
             else{
-                behaviours.getOutOfWay(creep);
+                behaviours.recycle(creep);
+                //behaviours.getOutOfWay(creep);
             }
         }
         else
         {
-            var target = Game.getObjectById(creep.memory.hostileTarget);
+            var target = Game.getObjectById(creep.memory.hostile);
             if(target) {
                 // Close
                 if(creep.attack(target) != OK) {
@@ -42,8 +43,8 @@ module.exports = {
                 }
             }
             else{
-                delete creep.memory.hostileTarget;
+                delete creep.memory.hostile;
             }
         }
-	}
+    }
 };

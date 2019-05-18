@@ -8,7 +8,7 @@ module.exports = {
                 console.log(`My creep died with ID=${tombstone.creep.id} ` +
                      `and role=${Memory.creeps[tombstone.creep.name].roleId}`);
 
-                room.createFlag(tombstone.pos, "Danger", COLOR_RED);
+                //room.createFlag(tombstone.pos, "Danger", COLOR_RED);
                 // Warn the others
             }    
         });

@@ -8,6 +8,8 @@ function getAverage(){
 
 }
 
+let SHOW = false;
+
 module.exports = {
     run: function(room) {
         if(room.controller.my){
@@ -43,12 +45,18 @@ module.exports = {
 
                 room.memory.statistics.total = total;
 
-                let perTick = (total / STATISTICS_NUM_TICKS);
-                console.log("Now:      " + diff + "/tick");
-                console.log("Last "+STATISTICS_NUM_TICKS+": " + perTick + "/tick");
-                console.log("Estimate: " + c.progress + "/" + c.progressTotal + "=" + Math.round(c.progress/c.progressTotal * 100.0) 
-                            + " -> " + Math.round((c.progressTotal - c.progress) / diff)/1000 + "k ticks eta")
-
+                if(SHOW){
+                    let perTick = (total / STATISTICS_NUM_TICKS);
+                    console.log("#####################################")
+                    console.log("#####################################")
+                    console.log("Progress: " + Math.round(c.progress / c.progressTotal * 100) + "%") 
+                    console.log("Now:      " + diff + "/tick");
+                    console.log("Last "+STATISTICS_NUM_TICKS+": " + perTick + "/tick");
+                    console.log("Estimate eta: " + Math.round((c.progressTotal - c.progress) / perTick)/1000 + "k ticks");
+                    console.log("Bucket: " + Game.cpu.bucket)
+                    console.log("#####################################")
+                    console.log("#####################################")
+                }
             }
             writeTickToMemory(c);
         }

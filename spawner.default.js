@@ -54,8 +54,15 @@ function spawnOptimized(available, startAttributes, desirableAttributes, role, s
 
 const EXTENSION_SIZE = 50;
 
-function checkSpawn(spawner) {
-    
+let maintainedClasses = [
+    {role: "extracter", priority: 0, amount: 2}, // One per source
+    {role: "transporter", priority: 1, amount: 4}, // Depends on energy max
+    {role: "builder", priority: 2, amount: 1}, // Depends on construction sites
+    {role: "upgrader", priority: 2, amount: 1}, // Depends on energy and setting
+    {role: "fighter", priority: 0, amount: 0} // Depends on enemies
+];
+
+function checkSpawn(spawner) {    
     let available = spawner.room.energyAvailable; //energyCapacityAvailable
     
     if(available < 300)

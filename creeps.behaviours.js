@@ -58,7 +58,7 @@ module.exports = {
     getEnergyFromSomewhere: function(creep){
         //Search for energy
         //creep.say("Energy")
-        if(creep.memory.pickupPoint == undefined){
+        if(creep.memory.target == undefined){
             let targets = [];
             let droppedResources = creep.room.find(FIND_DROPPED_RESOURCES, {
                 filter: function(object) {
@@ -86,18 +86,18 @@ module.exports = {
             if(targets.length == 0)
                 return; 
  
-            creep.memory.pickupPoint = targets[0].id;
+            creep.memory.target = targets[0].id;
             claimMgr.claimTransport(creep, targets[0].id);
         }
         
-        if(creep.memory.pickupPoint != undefined)
+        if(creep.memory.target != undefined)
         {
-            let pickupObject = Game.getObjectById(creep.memory.pickupPoint);
+            let pickupObject = Game.getObjectById(creep.memory.target);
 
             function removeTarget(){
-                claimMgr.unclaimTransport(creep, creep.memory.pickupPoint);
-                creep.memory.pickupPoint = undefined;
-                delete creep.memory.pickupPoint;
+                claimMgr.unclaimTransport(creep, creep.memory.target);
+                creep.memory.target = undefined;
+                delete creep.memory.target;
                 return;
             }
 
@@ -128,7 +128,7 @@ module.exports = {
 
     getDroppedResources: function(creep){
         //creep.say("Dropped")
-        if(creep.memory.targetResource == undefined){
+        if(creep.memory.target == undefined){
             let targets = creep.room.find(FIND_DROPPED_RESOURCES, {
                 filter: function(object) {
                     return object.resourceType == RESOURCE_ENERGY && object.amount > claimMgr.claimedAmount(object.id);
@@ -143,19 +143,19 @@ module.exports = {
             });           
 
             if(targets.length != 0){
-                creep.memory.targetResource = targets[0].id;
-                claimMgr.claimTransport(creep, creep.memory.targetResource);
+                creep.memory.target = targets[0].id;
+                claimMgr.claimTransport(creep, creep.memory.target);
             }
             else
                 return false;
         }
         
-        if(creep.memory.targetResource != undefined) {
-            let target = Game.getObjectById(creep.memory.targetResource);
+        if(creep.memory.target != undefined) {
+            let target = Game.getObjectById(creep.memory.target);
             
             function removeTarget(){
-                claimMgr.unclaimTransport(creep, creep.memory.targetResource);
-                delete creep.memory.targetResource;
+                claimMgr.unclaimTransport(creep, creep.memory.target);
+                delete creep.memory.target;
             }
             
             if(target == null){
@@ -177,7 +177,7 @@ module.exports = {
             creep.room.memory.reservedExtensions = {};
         }
 
-        if(creep.memory.targetExtensionSink == undefined){
+        if(creep.memory.target == undefined){
             let targets = creep.room.find(FIND_STRUCTURES, {
                     filter: (structure) => { //|| structure.structureType == STRUCTURE_TOWER
                         return (structure.structureType == STRUCTURE_EXTENSION || structure.structureType == STRUCTURE_SPAWN) && structure.energy < structure.energyCapacity 
@@ -188,41 +188,41 @@ module.exports = {
             targets = targets.sort(function(a, b){ return utils.distance(a.pos, creep.pos) > utils.distance(b.pos, creep.pos); });            
 
             if(targets.length != 0){
-                creep.memory.targetExtensionSink = targets[0].id;
+                creep.memory.target = targets[0].id;
                 return true;
             }
             else
                 return false;
         }
 
-        return creep.memory.targetExtensionSink != undefined;
+        return creep.memory.target != undefined;
     },
 
     bringResourcesToExtensions: function(creep){
         if(module.exports.unreservedExtensionsExist(creep) == false)
             return false;
 
-        if(creep.memory.targetExtensionSink != undefined){
-            var targetExtensionSink = Game.getObjectById(creep.memory.targetExtensionSink);
+        if(creep.memory.target != undefined){
+            var targetExtensionSink = Game.getObjectById(creep.memory.target);
             creep.room.visual.circle(targetExtensionSink.pos.x, targetExtensionSink.pos.y, {fill: 'transparent', radius: 0.5, stroke: 'red'});
 
             if(targetExtensionSink == null || targetExtensionSink.energy == targetExtensionSink.energyCapacity)
             {
                 // Sink just got filled
-                delete creep.memory.targetExtensionSink;
-                delete creep.room.memory.reservedExtensions[creep.memory.targetExtensionSink];
+                delete creep.memory.target;
+                delete creep.room.memory.reservedExtensions[creep.memory.target];
                 return module.exports.bringResourcesToExtensions(creep); // Recoursion
             }
 
             let result = creep.transfer(targetExtensionSink, RESOURCE_ENERGY);
             if(result == ERR_NOT_IN_RANGE) {
-                creep.room.memory.reservedExtensions[creep.memory.targetExtensionSink] = Game.time;
+                creep.room.memory.reservedExtensions[creep.memory.target] = Game.time;
                 voteomat.voteRoad(creep);
                 creep.travelTo(targetExtensionSink, {visualizePathStyle: {stroke: '#ffffff'}});
             }
             else if(result == OK){
-                delete creep.room.memory.reservedExtensions[creep.memory.targetExtensionSink];
-                delete creep.memory.targetExtensionSink;
+                delete creep.room.memory.reservedExtensions[creep.memory.target];
+                delete creep.memory.target;
             }
             else{
                 console.log("Strange error code when filling extension")
@@ -249,7 +249,7 @@ module.exports = {
         if(maxDistance == undefined)
             maxDistance = 100;
 
-        if(creep.memory.targetSink == undefined){
+        if(creep.memory.target == undefined){
             var targets = creep.room.find(FIND_STRUCTURES, {
                     filter: (structure) => {
                         return (structure.structureType == STRUCTURE_CONTAINER ||
@@ -262,23 +262,27 @@ module.exports = {
                     && utils.distance(structure.pos, creep.pos) < maxDistance; //Todo: only works for energy
             });
 
-            targets = targets.sort(function(a, b){ return utils.distance(a.pos, creep.pos) > utils.distance(b.pos, creep.pos); });            
+            // Tower is priority
+            targets = targets.sort(function(a, b){ 
+                    return utils.distance(a.pos, creep.pos) > utils.distance(b.pos, creep.pos) 
+                           || a.structureType == STRUCTURE_TOWER; 
+            });            
 
             if(targets.length > 0) {
-                creep.memory.targetSink = targets[0].id;
+                creep.memory.target = targets[0].id;
             }
             else
                 return false;
         }
 
-        if(creep.memory.targetSink != undefined){
-            var targetSink = Game.getObjectById(creep.memory.targetSink);
+        if(creep.memory.target != undefined){
+            var targetSink = Game.getObjectById(creep.memory.target);
             
             if(targetSink == null 
                 || (targetSink.structureType == STRUCTURE_CONTAINER && targetSink.store[RESOURCE_ENERGY] == targetSink.storeCapacity))
             {
                 // Sink just got filled
-                delete creep.memory.targetSink;
+                delete creep.memory.target;
                 return module.exports.bringResourcesToContainers(creep, maxDistance); // Recursion
             }
 
@@ -288,12 +292,12 @@ module.exports = {
                 creep.travelTo(targetSink);
             }
             else if(result == OK){
-                delete creep.memory.targetSink;
+                delete creep.memory.target;
                 return true;
             }
             else{
                 console.log("Strange error code when filling container" + result)
-                delete creep.memory.targetSink;
+                delete creep.memory.target;
                 return false;
             }
         }
@@ -314,7 +318,7 @@ module.exports = {
     },
 
     recycle: function(creep){
-        if(creep.memory.recycleSpawn == undefined){
+        if(creep.memory.target == undefined){
             let spawn = creep.pos.findClosestByPath(FIND_MY_STRUCTURES, {
                 filter: (i) => i.structureType == STRUCTURE_SPAWN
             });
@@ -324,11 +328,11 @@ module.exports = {
                 return;
             }
 
-            creep.memory.recycleSpawn = spawn.id;
+            creep.memory.target = spawn.id;
         }
 
-        if(creep.memory.recycleSpawn != undefined){
-            let targetSpawn = Game.getObjectById(creep.memory.recycleSpawn);
+        if(creep.memory.target != undefined){
+            let targetSpawn = Game.getObjectById(creep.memory.target);
             if(targetSpawn.recycleCreep(creep) == ERR_NOT_IN_RANGE)
                 creep.travelTo(targetSpawn);
         }

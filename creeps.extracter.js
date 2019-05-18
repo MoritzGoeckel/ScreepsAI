@@ -6,13 +6,14 @@ var behaviours = require('./creeps.behaviours');
 module.exports = {
     run: function(creep) {
 
-        // TODO: Sometimes  they are still on the same source
+        if(creep.memory.target == undefined){
+            var extracters = _.filter(Game.creeps, (creep) => creep.memory.roleId == 'extracter' && creep.memory.target != undefined);
 
-        if(creep.memory.assignedSource == undefined){
-            var extracters = _.filter(Game.creeps, (creep) => creep.memory.roleId == 'extracter' && creep.memory.assignedSource != undefined);
+            // This should check if the flag is actually red
+            // && source.pos.findInRange(FIND_FLAGS, 8).length == 0
 
             let sources = creep.room.find(FIND_SOURCES).filter(function(source) {
-                return source.pos.findInRange(FIND_HOSTILE_CREEPS, 8).length == 0 && source.pos.findInRange(FIND_FLAGS, 8).length == 0; // Red flags
+                return source.pos.findInRange(FIND_HOSTILE_CREEPS, 8).length == 0; 
             });
 
             let sourceExtracterCount = {};
@@ -22,7 +23,7 @@ module.exports = {
             }
 
             for(let e in extracters){
-                sourceExtracterCount[extracters[e].memory.assignedSource]++;
+                sourceExtracterCount[extracters[e].memory.target]++;
             }
 
             let lowestId = {id:undefined, count:99999999};
@@ -34,11 +35,11 @@ module.exports = {
                 }
             }
             
-            creep.memory.assignedSource = lowestId.id;
+            creep.memory.target = lowestId.id;
         }
 
 
-        var assignedSource = Game.getObjectById(creep.memory.assignedSource);
+        var assignedSource = Game.getObjectById(creep.memory.target);
         var result = creep.harvest(assignedSource);
         if(result == ERR_NOT_IN_RANGE) {
             voteomat.voteRoad(creep);
