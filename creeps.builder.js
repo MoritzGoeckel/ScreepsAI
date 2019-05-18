@@ -1,9 +1,7 @@
 var utils = require('./opts.utils');
 var behaviours = require('./creeps.behaviours');
 
-let WALL_MAX_HITS = 10 * 1000;
-let RAMPART_MAX_HITS = 10 * 1000;
-let REPAIR_THRESHOLD = 0.8;
+var guidelines = require('./guidelines');
 
 var roleBuilder = {
 
@@ -31,10 +29,10 @@ var roleBuilder = {
                     FIND_STRUCTURES, 
                     {filter: (s) => 
                         (
-                            (s.hits < s.hitsMax * REPAIR_THRESHOLD) 
-                            && (s.structureType != STRUCTURE_WALL || s.hits < WALL_MAX_HITS) 
+                            (s.hits < s.hitsMax * guidelines.getLowerRepairThreshold(creep.room)) 
+                            && (s.structureType != STRUCTURE_WALL || s.hits < guidelines.getMaxWallHitpoints(creep.room)) 
                             &&  s.structureType != STRUCTURE_ROAD
-                            && (s.structureType != STRUCTURE_RAMPART || s.hits < RAMPART_MAX_HITS))
+                            && (s.structureType != STRUCTURE_RAMPART || s.hits < guidelines.getMaxRampartHitpoints(creep.room)))
                     });
 
                 if (structureToRepair != null) {
@@ -58,8 +56,8 @@ var roleBuilder = {
 
             if(structure == null ||                                                                                     // Over repair 20%
                 (structure.hits >= structure.hitsMax 
-                    || (structure.structureType == STRUCTURE_WALL && structure.hits > WALL_MAX_HITS + WALL_MAX_HITS * 0.2)
-                    || (structure.structureType == STRUCTURE_RAMPART && structure.hits > RAMPART_MAX_HITS + RAMPART_MAX_HITS * 0.2)                    
+                    || (structure.structureType == STRUCTURE_WALL && structure.hits > guidelines.getMaxWallHitpoints(creep.room) * guidelines.getUpperRepairThreshold(creep.room))
+                    || (structure.structureType == STRUCTURE_RAMPART && structure.hits > guidelines.getMaxRampartHitpoints(creep.room) * guidelines.getUpperRepairThreshold(creep.room))                    
                 )
             ){
                 delete creep.memory.structureToRepair;

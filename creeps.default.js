@@ -1,6 +1,8 @@
 var utils = require('./opts.utils');
 var behaviours = require('./creeps.behaviours');
 
+var guidelines = require('./guidelines');
+
 module.exports = {
     run: function(creep) {
         var roles = {
@@ -17,6 +19,13 @@ module.exports = {
         //    behaviours.recycle(creep);
         //    return;
         //}
+
+        if(roles[creep.memory.roleId] != "fighter" && guidelines.getStayInside(creep.room)){
+            let busy = behaviours.goIntoSafety(creep);
+            
+            if(busy)
+                return;
+        }
 
         if(roles[creep.memory.roleId] != undefined)
             roles[creep.memory.roleId].run(creep);

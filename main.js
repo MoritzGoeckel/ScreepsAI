@@ -1,3 +1,7 @@
+// Version 18. May
+
+var guidelines = require('./guidelines');
+
 var cleanup = require('./opts.cleanup');
 var spawnerMgr = require('./spawner.default');
 var creepMgr = require('./creeps.default');
@@ -17,6 +21,7 @@ var towerPlanner = require('./planner.tower');
 var wallsPlanner = require('./planner.walls');
 
 var towersBehaviour = require('./defence.tower');
+var defence = require('./defence.strategy');
 
 var oneIn = require('./opts.rnd');
 var claimMgr = require('./opts.claimmgr');
@@ -57,6 +62,7 @@ module.exports.loop = function () {
         statisticsRunner.run(Game.rooms[r]);
 
         towersBehaviour.run(Game.rooms[r]);
+        defence.run(Game.rooms[r]);
 
         //Debugging purpose
         //constructionUtils.drawPattern(Game.rooms[r]);

@@ -1,5 +1,7 @@
 var oneIn = require('./opts.rnd');
 
+var guidelines = require('./guidelines');
+
 function getAttributesCost(attrs){
     let costs = 0;
     for(let i = 0; i < attrs.length; i++)
@@ -74,7 +76,6 @@ function checkSpawn(spawner) {
 
     if(spawner.spawning == null)
     {
-        spawner.memory.enemies = spawner.room.find(FIND_HOSTILE_CREEPS).length + spawner.room.find(FIND_HOSTILE_SPAWNS).length;
         let existingConstructionSites = spawner.room.find(FIND_CONSTRUCTION_SITES).length;
         let resources = spawner.room.find(FIND_SOURCES);
 
@@ -87,10 +88,9 @@ function checkSpawn(spawner) {
         let maxUpgrader = 3;
         
         let maxBuilder = 1 + (spawner.room.energyCapacityAvailable < 600 ? existingConstructionSites * 2 : existingConstructionSites);
-        maxBuilder = Math.min(maxBuilder, 6);
+        maxBuilder = Math.min(maxBuilder, 6); 
 
-        let maxFighter = 3 * spawner.memory.enemies + (1 - existingTowers);
-        maxFighter = Math.max(maxFighter, 0);
+        let maxFighter = guidelines.getRequiredFighters(spawner.room);
 
         console.log( "Creeps in room: " + '\n'
         + " Extracter: " + extracters.length + "/" + maxExtracters + '\n'

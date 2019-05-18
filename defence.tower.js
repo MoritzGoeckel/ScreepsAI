@@ -1,15 +1,18 @@
 var utils = require('./opts.utils');
+var guidelines = require('./guidelines');
 
 function repair(tower){
     // Maybe not the closest, but the most damaged (least health points)
     
     var closestDamagedStructure = tower.pos.findClosestByRange(FIND_STRUCTURES, {filter: (s) => 
-        s.hits < s.hitsMax * 0.9
+           s.hits < s.hitsMax * guidelines.getLowerRepairThreshold(tower.room) 
         && utils.distance(s.pos, tower.pos) < 100 // Should also repair far structures
         && s.structureType != STRUCTURE_ROAD
-        && ((s.structureType != STRUCTURE_WALL 
-            && s.structureType != STRUCTURE_RAMPART)
-            || s.hits < 10 * 1000) // Rampart and wall max
+        && (
+               (s.structureType == STRUCTURE_WALL && s.hits < guidelines.getMaxWallHitpoints(tower.room) * guidelines.getLowerRepairThreshold(tower.room))
+            || (s.structureType == STRUCTURE_RAMPART && s.hits < guidelines.getMaxRampartHitpoints(tower.room) * guidelines.getLowerRepairThreshold(tower.room))
+            || (s.structureType != STRUCTURE_RAMPART && s.structureType != STRUCTURE_WALL)
+           )
     });
     
     if(closestDamagedStructure) {

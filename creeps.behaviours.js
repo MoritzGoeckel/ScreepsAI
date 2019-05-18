@@ -3,12 +3,24 @@ var voteomat = require('./opts.voteomat');
 var constructionUtils = require('./planner.utils');
 var claimMgr = require('./opts.claimmgr');
 
+var guidelines = require('./guidelines');
+
+let BASE_RADIUS = 10;
+
 module.exports = {
 
     // Todo: Maybe have a model with two methods per actions: OrderAction, PerformAction
 
     goSomewhereRandom: function (creep){
         creep.travelTo(new RoomPosition(Math.random() * 30 + 1, Math.random() * 30 + 1, creep.room.name));
+    },
+
+    goIntoSafety: function(creep){
+        if(utils.distance(creep.pos, guidelines.getCenter(creep.room)) < BASE_RADIUS)
+            return false;
+
+        creep.travelTo(guidelines.getCenter(creep.room));
+        return true;
     },
     
     getOutOfWay: function (creep){
@@ -160,7 +172,6 @@ module.exports = {
         }
     },
 
-    // Also fills towers because of priority
     unreservedExtensionsExist: function(creep){
         if(creep.room.memory.reservedExtensions == undefined){
             creep.room.memory.reservedExtensions = {};
@@ -168,8 +179,8 @@ module.exports = {
 
         if(creep.memory.targetExtensionSink == undefined){
             let targets = creep.room.find(FIND_STRUCTURES, {
-                    filter: (structure) => {
-                        return (structure.structureType == STRUCTURE_EXTENSION || structure.structureType == STRUCTURE_SPAWN || structure.structureType == STRUCTURE_TOWER) && structure.energy < structure.energyCapacity 
+                    filter: (structure) => { //|| structure.structureType == STRUCTURE_TOWER
+                        return (structure.structureType == STRUCTURE_EXTENSION || structure.structureType == STRUCTURE_SPAWN) && structure.energy < structure.energyCapacity 
                             && (creep.room.memory.reservedExtensions[structure.id] == undefined || creep.room.memory.reservedExtensions[structure.id] < Game.time - 5);
                     }
             });
