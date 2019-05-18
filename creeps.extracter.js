@@ -38,7 +38,6 @@ module.exports = {
             creep.memory.target = lowestId.id;
         }
 
-
         var assignedSource = Game.getObjectById(creep.memory.target);
         var result = creep.harvest(assignedSource);
         if(result == ERR_NOT_IN_RANGE) {

@@ -63,7 +63,9 @@ const CLASS_BLUEPRINTS = {
     extracter: {baseParts: [MOVE, WORK], additionalParts: [WORK, WORK, WORK, MOVE], priceLimit: 14 * EXTENSION_SIZE},
     transporter: {baseParts: [MOVE, CARRY], additionalParts: [CARRY, MOVE], priceLimit: 20 * EXTENSION_SIZE},
     upgrader: {baseParts: [MOVE, WORK, CARRY, MOVE], additionalParts: [WORK, WORK, WORK, CARRY, MOVE], priceLimit: STANDART_ENERGY_LIMIT},
-    builder: {baseParts: [MOVE, MOVE, WORK, CARRY], additionalParts: [CARRY, MOVE, WORK, WORK, MOVE], priceLimit: STANDART_ENERGY_LIMIT}
+    builder: {baseParts: [MOVE, MOVE, WORK, CARRY], additionalParts: [CARRY, MOVE, WORK, WORK, MOVE], priceLimit: STANDART_ENERGY_LIMIT},
+    claimer: {baseParts: [MOVE, CLAIM], additionalParts: [MOVE, CLAIM], priceLimit: 99999},
+    pioneer: {baseParts: [MOVE, MOVE, WORK, CARRY], additionalParts: [MOVE, MOVE, WORK, CARRY], priceLimit: 20 * EXTENSION_SIZE}
 }
 
 function checkSpawn(spawner) {    

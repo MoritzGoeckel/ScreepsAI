@@ -9,7 +9,7 @@ var roleBuilder = {
 
     run: function(creep) {
 
-	    if(creep.carry.energy == 0){
+        if(creep.carry.energy == 0){
             behaviours.getEnergyFromSomewhere(creep);
             return;
         }

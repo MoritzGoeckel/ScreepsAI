@@ -5,7 +5,9 @@ let DEFAULT_CLASSES = {
     transporter: {priority: 0, amount: 4}, // Depends on energy max
     builder: {priority: 11, amount: 1}, // Depends on construction sites
     upgrader: {priority: 12, amount: 3}, // Depends on energy and setting
-    fighter: {priority: 0, amount: 0} // Depends on enemies
+    fighter: {priority: 0, amount: 0}, // Depends on enemies
+    claimer: {priority: 14, amount: 0}, 
+    pioneer: {priority: 15, amount: 0}
 };
 
 function putCreepToMaintain(blueprint, room){
@@ -13,6 +15,10 @@ function putCreepToMaintain(blueprint, room){
 }
 
 function setCreepToMaintainAmount(role, amount, room){ 
+    initMemory(room);
+    if(room.memory.creepsToMaintain[role] == undefined){
+        room.memory.creepsToMaintain[role] = DEFAULT_CLASSES[role];
+    }
     room.memory.creepsToMaintain[role].amount = amount;
 }
 
@@ -30,7 +36,7 @@ module.exports = {
             return;
 
         let existingConstructionSites = room.find(FIND_CONSTRUCTION_SITES).length;
-        setCreepToMaintainAmount("builder", Math.max(existingConstructionSites, 3), room);
+        setCreepToMaintainAmount("builder", Math.min(existingConstructionSites, 3), room);
 
         let resources = room.find(FIND_SOURCES).length;
         setCreepToMaintainAmount("extracter", resources, room);

@@ -1,4 +1,10 @@
 var guidelines = require('./guidelines');
+var oneIn = require('./opts.rnd');
+
+var creepsManager = require('./manager.creeps');
+
+// TODO: Reserve CONTROLLER
+// TODO: Maybe support with energy           
 
 function resolveFlagPairs(){
     let pairs = {};
@@ -19,20 +25,46 @@ function resolveFlagPairs(){
     for(let col in pairs){
         let pair = pairs[col];
         if(pair.sink != null && pair.source != null){
-            // Create CLAIMER IN
-            //supporting.room
-
-            // Reserve CONTROLLER
-            // Claim CONTROLLER
-            // Maybe support with energy
+            // Tell room to create claimers
+            creepsManager.setCreepToMaintainAmount("claimer", 1, pair.source.room);
             
+            // Set relly point
+            setClaimerRellyPoint(pair.sink.pos, pair.source.room);
+ 
             // Build SPAWN on green flag
-            guidelines.setCenter(sink.pos, sink.room);
+            if(pair.sink.room != undefined){
+                guidelines.setCenter(pair.sink.pos, pair.sink.room);
+                
+                if(pair.sink.room.find(FIND_MY_STRUCTURES, 
+                    {filter: {structureType: STRUCTURE_SPAWN}}).length > 0) 
+                {
+                    // Spawn exists 
+                    creepsManager.setCreepToMaintainAmount("pioneer", 0, pair.source.room);
+                    creepsManager.setCreepToMaintainAmount("claimer", 0, pair.source.room);
+                    setClaimerRellyPoint(null, pair.source.room);
+                    
+                    pair.sink.remove();
+                    pair.source.remove();
+                    continue;
+                }
+                else if(pair.sink.room.controller.my){
+                    creepsManager.setCreepToMaintainAmount("claimer", 0, pair.source.room);
+                    
+                    // Construct spawn
+                    pair.sink.pos.createConstructionSite(STRUCTURE_SPAWN);
+                    // Request pioneer
+                    creepsManager.setCreepToMaintainAmount("pioneer", 2, pair.source.room);
+                }
+            }
         }
         else{
             console.log("Incomplete flag pair");
         }
     }
+}
+
+function setClaimerRellyPoint(pos, room){
+    room.memory.claimerRellyPoint = JSON.stringify(pos);
 }
 
 module.exports = {
@@ -42,16 +74,20 @@ module.exports = {
 
     // DANGER     => RED
 
+    getClaimerRellyPoint: function(room){
+        let target = JSON.parse(room.memory.claimerRellyPoint); 
+        return new RoomPosition(target.x, target.y, target.roomName);
+    },
+
     run: function(){
-        
-        // NOT YET
-        return;
+        //if(!oneIn(30))
+        //    return;
 
         resolveFlagPairs();
 
-        for(const r in Game.rooms) {
-            let room = Game.rooms[r];
+        //for(const r in Game.rooms) {
+            //let room = Game.rooms[r];
             //console.log(room) 
-        } 
+        //} 
     }
 }

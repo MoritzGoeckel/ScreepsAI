@@ -10,7 +10,9 @@ module.exports = {
             "transporter": require("./creeps.transporter"), 
             "upgrader":require("./creeps.upgrader"), 
             "builder":require("./creeps.builder"),
-            "fighter":require("./creeps.fighter")
+            "fighter":require("./creeps.fighter"),
+            "claimer":require("./creeps.claimer"),
+            "pioneer":require("./creeps.pioneer")
         };
         
         // TODO: Maybe refresh creep?
