@@ -51,7 +51,7 @@ module.exports = {
                     }
 
                     if(creep.build(site) == ERR_NOT_IN_RANGE) {
-                        creep.travelTo(site.pos);
+                        creep.travelTo(site.pos, {maxRooms: 1});
                     }  
                 } else{
                     // Extract resources
@@ -64,7 +64,7 @@ module.exports = {
                     
                     let source = Game.getObjectById(creep.memory.sourceid);
                     if(creep.harvest(source) == ERR_NOT_IN_RANGE){
-                        creep.travelTo(source.pos);
+                        creep.travelTo(source.pos, {maxRooms: 1});
                     } 
                     if(creep.carry.energy == creep.carryCapacity)
                         delete creep.memory.sourceid;

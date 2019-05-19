@@ -8,20 +8,25 @@ module.exports = {
 
         if(creep.memory.target != undefined){ 
             let target = creep.memory.target;
-            if(target.roomName != creep.pos.roomName){
-                // Its a position / Lets go closer
+            
+            if(target.x != undefined){
+                // Position is target
                 let pos = new RoomPosition(target.x, target.y, target.roomName); 
                 creep.travelTo(pos, {visualizePathStyle: {stroke: '#ffaa00'}, maxRooms: 3});
-            } else {
-                // We are in the room
-                // Could also reserve
-                let result = creep.claimController(creep.room.controller);
-                
+                if(target.roomName == creep.pos.roomName){
+                    creep.memory.target = creep.room.controller.id;
+                }
+            }
+            else{
+                // Controller is target
+                let c = Game.getObjectById(creep.memory.target);
+                let result = creep.claimController(c);
+
                 if(result != OK && result != ERR_NOT_IN_RANGE)                
                     console.log("Claiming error code: " + result)
                 
                 if(result == ERR_NOT_IN_RANGE) {
-                    creep.travelTo(creep.room.controller);
+                    creep.travelTo(creep.room.controller, {maxRooms: 1});
                 }
 
                 if(result == ERR_INVALID_TARGET){
@@ -29,7 +34,5 @@ module.exports = {
                 }
             }
         }
-
-        
     }
 }

@@ -107,7 +107,7 @@ module.exports = {
                     //room.visual.circle(candidate.x, candidate.y, {fill: 'transparent', radius: 1, stroke: 'red'});
     
                     let distance = utils.distance(candidate, targetPosition);
-                    if(distance < 2)
+                    if(distance < 2 || !module.exports.reachableFrom(spawn.pos, candidate))
                         continue;
 
                     scored[JSON.stringify(candidate)] = 1 / distance;
@@ -118,6 +118,11 @@ module.exports = {
         console.log("Found " + Object.keys(scored).length + " for " + structureType);
 
         return  utils.dictToScoreSortedList(scored);
+    },
+
+    reachableFrom(rhs, lhs){
+        let path = PathFinder.search(rhs, lhs, {maxRooms: 1}); 
+        return path.incomplete == false;
     },
 
     constructOneFromScored(room, poses, structureType){

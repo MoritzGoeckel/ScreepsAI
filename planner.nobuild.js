@@ -26,16 +26,16 @@ function draw(room){
 }
 
 function calculateNoBuilds(room){
-    // Only do once
-    if(room.memory.nobuild != undefined)
-        return;
-
     if(room.controller == undefined){
         console.log("[BUG] room.controller is undefined! WTF? ##############")
         return;
     }
 
     let spawns = room.find(FIND_MY_SPAWNS).map(s => s.pos);
+
+    if(spawns.length == 0)
+        return;
+
     let sources = room.find(FIND_SOURCES).map(s => s.pos);
     let exits_v2 = [room.find(FIND_EXIT_TOP), room.find(FIND_EXIT_RIGHT), room.find(FIND_EXIT_BOTTOM), room.find(FIND_EXIT_LEFT)]
         .map(arr => arr[Math.floor(arr.length / 2)])
@@ -54,15 +54,13 @@ function calculateNoBuilds(room){
     
     let points = [];
 
-    console.log(exits_v2)
-
     for(let s in spawns){
         for(let i in importantPoints){
-            let path = room.findPath(spawns[s], importantPoints[i], {ignoreCreeps: true, ignoreRoads: true});
+            let path = room.findPath(spawns[s], importantPoints[i], {ignoreDestructibleStructures: true, ignoreCreeps: true, ignoreRoads: true});
             points = points.concat(toPosArray(path).filter(p => { return p.x != importantPoints[i].x || p.y != importantPoints[i].y; }));
         }
         for(let s in sources){
-            let path = room.findPath(controller, sources[s], {ignoreCreeps: true, ignoreRoads: true});
+            let path = room.findPath(controller, sources[s], {ignoreDestructibleStructures: true, ignoreCreeps: true, ignoreRoads: true});
             points = points.concat(toPosArray(path).filter(p => { return p.x != sources[s].x || p.y != sources[s].y; }));
         }
     }
@@ -72,9 +70,9 @@ function calculateNoBuilds(room){
     points = _.uniq(points);
     points = points.map(p => JSON.parse(p));
 
-    // points.map(p => room.visual.circle(p.x, p.y, {fill: 'yellow', radius: 0.5, stroke: 'yellow'}));
+     points.map(p => room.visual.circle(p.x, p.y, {fill: 'yellow', radius: 0.5, stroke: 'yellow'}));
 
-    if(room.memory.nobuild == undefined || Object.keys(room.memory.nobuild).length > points.length){
+    if(room.memory.nobuild == undefined || Object.keys(room.memory.nobuild).length == 0 || Object.keys(room.memory.nobuild).length > points.length){
         let dict = {};
         points.map(p => { dict[JSON.stringify(p)] = 0 });
         room.memory.nobuild = dict;
@@ -84,7 +82,7 @@ function calculateNoBuilds(room){
 
 module.exports = {
     run: function(room) {
-        if(room.memory.nobuild == undefined)
+        if(room.memory.nobuild == undefined || Object.keys(room.memory.nobuild).length == 0)
             calculateNoBuilds(room);
 
         draw(room);
