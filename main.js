@@ -1,4 +1,4 @@
-// Version 18. May
+// Version 25. May
 
 var guidelines = require('./guidelines');
 
@@ -34,11 +34,22 @@ Memory.resourceQueue = [];
 
 // TODO LIST
 // * Regulate the amount of upgrading / storing
-// * Claiming other rooms
 // * Have dedicated transport creeps for spawner / extensions
 // * Tune price limits
 // * Have container for sources. Blacklist them. Let them be filled only by extracters
-// * Base umfang in config
+// * Have priority containers (transfer)
+// * Links
+// * Harvest other rooms (harvester, container, transporter, road)
+// * Repair roads (which?)
+// * Base umfang in config / More config
+// * Transporter should not idle next to storage
+// * Regulate the amount of transporters
+// * Resource harvesters
+// * Resource labs
+// * Creep boosting with resources
+// * CPU Profiling
+// * CPU optimizations (caching?)
+// * Build roads on ramparts
 
 module.exports.loop = function () {
     cleanup.run();

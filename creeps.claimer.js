@@ -21,17 +21,17 @@ module.exports = {
                 // Controller is target
                 let c = Game.getObjectById(creep.memory.target);
                 let result = creep.claimController(c);
-
-                if(result != OK && result != ERR_NOT_IN_RANGE)                
-                    console.log("Claiming error code: " + result)
                 
                 if(result == ERR_NOT_IN_RANGE) {
                     creep.travelTo(creep.room.controller, {maxRooms: 1});
                 }
 
-                if(result == ERR_INVALID_TARGET){
+                if(c.my){
                     //Self destruct?
-                }
+                    console.log("Done claiming, removing creep")
+                    creep.suicide();
+                } else if(result != OK && result != ERR_NOT_IN_RANGE)                
+                    console.log("Claiming error code: " + result)
             }
         }
     }

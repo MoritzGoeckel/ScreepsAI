@@ -31,15 +31,17 @@ function spawnOptimized(available, startAttributes, desirableAttributes, role, s
     
     let attributes = startAttributes;
 
-    let i = 0;
-    while(getAttributesCost(attributes) < available 
-    && attributes.length < 30 // Maybe set limit to 50 
-    && getAttributesCost(attributes) < energyLimit) // Dont spawn too expensive creeps
-    { 
-        attributes.push(desirableAttributes[i % desirableAttributes.length]);
-        i++;
+    if(desirableAttributes != null && desirableAttributes != []){
+        let i = 0;
+        while(getAttributesCost(attributes) < available 
+        && attributes.length < 30 // Maybe set limit to 50 
+        && getAttributesCost(attributes) < energyLimit) // Dont spawn too expensive creeps
+        { 
+            attributes.push(desirableAttributes[i % desirableAttributes.length]);
+            i++;
+        }
+        attributes.pop();
     }
-    attributes.pop();
 
     if(spawner.memory["lastid"] == undefined)
         spawner.memory["lastid"] = 1;
@@ -64,7 +66,7 @@ const CLASS_BLUEPRINTS = {
     transporter: {baseParts: [MOVE, CARRY], additionalParts: [CARRY, MOVE], priceLimit: 20 * EXTENSION_SIZE},
     upgrader: {baseParts: [MOVE, WORK, CARRY, MOVE], additionalParts: [WORK, WORK, WORK, CARRY, MOVE], priceLimit: STANDART_ENERGY_LIMIT},
     builder: {baseParts: [MOVE, MOVE, WORK, CARRY], additionalParts: [CARRY, MOVE, WORK, WORK, MOVE], priceLimit: STANDART_ENERGY_LIMIT},
-    claimer: {baseParts: [MOVE, CLAIM], additionalParts: [MOVE, CLAIM], priceLimit: 99999},
+    claimer: {baseParts: [MOVE, CLAIM], additionalParts: null, priceLimit: 999999},
     pioneer: {baseParts: [MOVE, MOVE, WORK, CARRY], additionalParts: [MOVE, MOVE, WORK, CARRY], priceLimit: 20 * EXTENSION_SIZE}
 }
 

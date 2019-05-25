@@ -50,10 +50,25 @@ function resolveFlagPairs(){
                 else if(pair.sink.room.controller.my){
                     creepsManager.setCreepToMaintainAmount("claimer", 0, pair.source.room);
                     
+                    // Destruct abandoned spawn
+                    let other_spawns = pair.sink.room.find(FIND_STRUCTURES, {filter: {structureType: STRUCTURE_SPAWN}});
+                    if(other_spawns != null){
+                        for(let s in other_spawns){
+                            if(other_spawns[s].my == false){
+                                let result = other_spawns[s].destroy();
+                                console.log("Removing enemy spawn: " + result);
+                            }
+                        }
+                    }
+                    
                     // Construct spawn
-                    pair.sink.pos.createConstructionSite(STRUCTURE_SPAWN);
+                    let result = pair.sink.pos.createConstructionSite(STRUCTURE_SPAWN);
+                    //if(result == -14){
+                    //    console.log("Cant build spawn because of rcl")
+                    //}
+                    
                     // Request pioneer
-                    creepsManager.setCreepToMaintainAmount("pioneer", 2, pair.source.room);
+                    creepsManager.setCreepToMaintainAmount("pioneer", 4, pair.source.room);
                 }
             }
         }

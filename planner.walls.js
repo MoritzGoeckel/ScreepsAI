@@ -136,8 +136,6 @@ module.exports = {
             }
             
             if(oneIn(183)){
-                checkConstruct(room, getCandidatesInCircle(room, room.controller.pos, 3), STRUCTURE_RAMPART);
-                checkConstruct(room, getCandidatesInCircle(room, room.controller.pos, 2), STRUCTURE_RAMPART);
                 checkConstruct(room, getCandidatesInCircle(room, room.controller.pos, 1), STRUCTURE_RAMPART);
             }
 
