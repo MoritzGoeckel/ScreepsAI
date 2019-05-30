@@ -97,8 +97,8 @@ module.exports = {
         
         let scored = {};
         
-        for(let x = -searchDistance; x < searchDistance; x++){
-            for(let y = -searchDistance; y < searchDistance; y++){
+        for(let x = -searchDistance; x <= searchDistance; x++){
+            for(let y = -searchDistance; y <= searchDistance; y++){
                 let candidate = new RoomPosition(targetPosition.x + x, targetPosition.y + y, room.name);
     
                 if(room.memory.nobuild[JSON.stringify({x: candidate.x, y: candidate.y})] == undefined && 

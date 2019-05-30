@@ -6,6 +6,9 @@ var behaviours = require('./creeps.behaviours');
 module.exports = {
     run: function(creep) {
 
+        // TODO: Build container
+        // TODO: Always stay on container
+
         if(creep.memory.target == undefined){
             var extracters = _.filter(Game.creeps, (creep) => creep.memory.roleId == 'extracter' && creep.memory.target != undefined);
 

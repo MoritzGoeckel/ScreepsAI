@@ -85,6 +85,6 @@ module.exports = {
         if(room.memory.nobuild == undefined || Object.keys(room.memory.nobuild).length == 0)
             calculateNoBuilds(room);
 
-        draw(room);
+        //draw(room);
 	}
 };

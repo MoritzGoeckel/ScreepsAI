@@ -1,10 +1,12 @@
 var _ = require('lodash');
 var behaviours = require('./creeps.behaviours');
 
+// TODO: Have a priority for containers
+// TODO: Take from low priority containers, fill to high priority containers
+// TODO: Balance containers if nothing else to do
+
 module.exports = {
     run: function(creep) {
-
-        // TODO: Balance containers
 
         if(creep.room.energyAvailable == creep.room.energyCapacityAvailable){
             delete creep.memory.doingExtensions;
