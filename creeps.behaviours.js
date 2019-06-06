@@ -5,6 +5,8 @@ var claimMgr = require('./opts.claimmgr');
 
 var guidelines = require('./guidelines');
 
+var containerMgr = require('./manager.containerPriority');
+
 let BASE_RADIUS = 10;
 
 module.exports = {
@@ -137,11 +139,22 @@ module.exports = {
             
             // Balance containers. Maybe have priority containers 
             
+            let lowPriorityContainer = creep.room.find(FIND_STRUCTURES, {
+                filter: function(object) {
+                    if(object.structureType == STRUCTURE_CONTAINER)
+                        object.amount = object.store[RESOURCE_ENERGY];
+                        
+                    return object.structureType == STRUCTURE_CONTAINER && object.store[RESOURCE_ENERGY] > claimMgr.claimedAmount(object.id) && containerMgr.getPriority(object.id, creep.room) < 0;
+                }
+            });
+            
+            targets = targets.concat(lowPriorityContainer);
+            
             targets = targets.sort(function(a, b){ 
                 return (utils.distance(a.pos, creep.pos) / Math.min(a.amount - claimMgr.claimedAmount(a.id), creep.carryCapacity)) 
                     > (utils.distance(b.pos, creep.pos) / Math.min(b.amount - claimMgr.claimedAmount(b.id), creep.carryCapacity)); 
             });           
-
+            
             if(targets.length != 0){
                 creep.memory.target = targets[0].id;
                 claimMgr.claimTransport(creep, creep.memory.target);
@@ -160,14 +173,22 @@ module.exports = {
             
             if(target == null){
                 removeTarget();
+                return;
             }
 
-            let result = creep.pickup(target)
+            let result;
+            if(target.structureType != undefined){
+                result = creep.withdraw(target, RESOURCE_ENERGY);
+            } else{
+                result = creep.pickup(target);
+            }
+            
             if(result == ERR_NOT_IN_RANGE) {
                 voteomat.voteRoad(creep);
                 creep.travelTo(target, {visualizePathStyle: {stroke: '#ffaa00'}, maxRooms: 1});
             } else {
                 removeTarget();
+                return;
             }
         }
     },
@@ -242,7 +263,8 @@ module.exports = {
             }
         }).filter(structure => {
             return ((structure.structureType == STRUCTURE_CONTAINER || structure.structureType == STRUCTURE_STORAGE) 
-                    && (structure.store[RESOURCE_ENERGY] + (structure.storeCapacity / 10.0)) < structure.storeCapacity); //Todo: only works for energy
+                    && (structure.store[RESOURCE_ENERGY] + (structure.storeCapacity / 10.0)) < structure.storeCapacity)
+                    && (containerMgr.getPriority(structure.id, creep.room) >= 0); //Todo: only works for energy
         }).length != 0;
     },
 
@@ -260,13 +282,17 @@ module.exports = {
             }).filter(structure => {
                 return (((structure.structureType == STRUCTURE_CONTAINER || structure.structureType == STRUCTURE_STORAGE) && (structure.store[RESOURCE_ENERGY] + (structure.storeCapacity / 10.0)) < structure.storeCapacity)
                     || (structure.structureType == STRUCTURE_TOWER && structure.energy < structure.energyCapacity))
-                    && utils.distance(structure.pos, creep.pos) < maxDistance; //Todo: only works for energy
+                    && utils.distance(structure.pos, creep.pos) < maxDistance
+                    && containerMgr.getPriority(structure.id, creep.room) >= 0; //Todo: only works for energy
+            }).map(target => {
+                target.score = ((containerMgr.getPriority(target.id, creep.room) * 10) + 1) / utils.distance(target.pos, creep.pos);
+                return target;
             });
 
             // Tower is priority
             targets = targets.sort(function(a, b){ 
-                    return utils.distance(a.pos, creep.pos) > utils.distance(b.pos, creep.pos) 
-                           || a.structureType == STRUCTURE_TOWER; 
+                    return (a.score > b.score) // TODO: Test scoring. Correct?
+                        || a.structureType == STRUCTURE_TOWER;
             });            
 
             if(targets.length > 0) {

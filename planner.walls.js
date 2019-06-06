@@ -7,9 +7,25 @@ function getCandidatesInCircle(room, center, radius){
 
     let terrain = room.getTerrain();
 
+    function bringIntoMap(pos){
+        let border = 2;
+        let ms = 50;
+        if(pos.x > ms - border)
+            pos.x = ms - border;
+        if(pos.y > ms - border)
+            pos.y = ms - border;
+        if(pos.x < border)
+            pos.x = border;
+        if(pos.y < border)
+            pos.y = border;
+            
+        return pos;
+    }
+
     function addIfNeedsWall(pos){
-        if(!utils.isInMap(pos.x, pos.y, 0))
-            return;
+        if(!utils.isInMap(pos.x, pos.y, 2)){
+            pos = bringIntoMap(pos);
+        }
         
         if(constructionUtils.mayBuild(pos, room)){
             // That is a wall
@@ -100,6 +116,7 @@ function checkConstruct(room, candidates, structure){
 
         let result = pos.createConstructionSite(structureActual);
         if(result != 0){
+            room.visual.circle(pos.x, pos.y, {fill: 'transparent', radius: 0.5, stroke: 'red'});
             console.log("Wall building failed: " + result);
             break;
         }

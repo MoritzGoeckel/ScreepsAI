@@ -3,6 +3,8 @@ var constructionUtils = require('./planner.utils');
 
 var oneIn = require('./opts.rnd');
 
+var containerMgr = require('./manager.containerPriority');
+
 // TODO: Make the container near sources low priority
 // TODO: Make the container near spawn high priority
 // TODO: Make the container near controller high priority
@@ -50,7 +52,7 @@ module.exports = {
     run: function(room) {
 
         if(oneIn(151))
-            constructionUtils.checkConstruction(room, room.controller.pos, STRUCTURE_CONTAINER, 2, 8);
+            constructionUtils.checkConstruction(room, room.controller.pos, STRUCTURE_CONTAINER, 1, 8);
         
         if(oneIn(153))
             constructionUtils.checkNearSpawns(room, STRUCTURE_STORAGE, 1, 8);
@@ -62,5 +64,14 @@ module.exports = {
         //If I need them, then they have to be stocked by the extracter and be blacklisted for transporter
         if(oneIn(157))
             buildNearSources(room)
+        
+        if(oneIn(158)){
+            containerMgr.closeSetPriority(room.controller.pos, 3, 1);
+            
+            let sources = room.find(FIND_SOURCES);
+            for(let s in sources){
+                containerMgr.closeSetPriority(sources[s].pos, 2, -1);
+            }
+        }
 	}
 };

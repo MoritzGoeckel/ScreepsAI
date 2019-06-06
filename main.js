@@ -1,4 +1,4 @@
-// Version 29. May
+// Version 31. May
 
 var guidelines = require('./guidelines');
 
@@ -50,6 +50,7 @@ Memory.resourceQueue = [];
 // * CPU Profiling
 // * CPU optimizations (caching?)
 // * Build roads on ramparts
+// * Fix scoring for container / tower
 
 module.exports.loop = function () {
     cleanup.run();

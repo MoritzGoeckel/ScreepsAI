@@ -7,7 +7,6 @@ module.exports = {
     run: function(creep) {
 
         // TODO: Build container
-        // TODO: Always stay on container
 
         if(creep.memory.target == undefined){
             var extracters = _.filter(Game.creeps, (creep) => creep.memory.roleId == 'extracter' && creep.memory.target != undefined);
@@ -38,10 +37,36 @@ module.exports = {
                 }
             }
             
+            var winner = Game.getObjectById(lowestId.id);
+            
+            let containers = winner.pos.findInRange(FIND_STRUCTURES, 2).filter(function(structure) {
+                return structure.structureType == STRUCTURE_CONTAINER;
+            });
+            
+            let container = containers[0];
+            
+            if(container != null){
+                creep.memory.targetPos = JSON.stringify({x: container.pos.x, y:container.pos.y, roomName: container.pos.roomName});
+                console.log("Setting target pos for extracter")
+            }
+            
             creep.memory.target = lowestId.id;
         }
 
         var assignedSource = Game.getObjectById(creep.memory.target);
+        
+        if(creep.memory.targetPos != undefined){
+            let targetPos = JSON.parse(creep.memory.targetPos);
+
+            if(creep.pos.x == targetPos.x && creep.pos.y == targetPos.y){
+                delete creep.memory.targetPos;
+            } else {
+                let tp = new RoomPosition(targetPos.x, targetPos.y, targetPos.roomName); 
+                creep.travelTo(tp, {visualizePathStyle: {stroke: '#ffaa00'}, maxRooms: 5});
+            }
+            return;
+        }
+        
         var result = creep.harvest(assignedSource);
         if(result == ERR_NOT_IN_RANGE) {
             voteomat.voteRoad(creep);
